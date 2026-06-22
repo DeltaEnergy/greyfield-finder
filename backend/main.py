@@ -4,12 +4,34 @@ import osmnx as ox
 import geopandas as gpd
 import pandas as pd
 from math import radians, sin, cos, sqrt, atan2
+import json
+from pathlib import Path
 
+@app.get("/analyze")
+def analyze_place(place: str = Query(..., description="Place name to analyze")):
+    normalized_place = place.strip().lower()
+
+    woodstock_names = {
+        "woodstock",
+        "woodstock, ontario",
+        "woodstock, ontario, canada",
+        "woodstock, oxford county, ontario, canada",
+    }
+
+    if normalized_place in woodstock_names and WOODSTOCK_CACHE.exists():
+        with open(WOODSTOCK_CACHE, "r", encoding="utf-8") as f:
+            return json.load(f)
+
+    # existing live OSMnx analysis continues below
+    
 ox.settings.use_cache = True
 ox.settings.log_console = True
 ox.settings.requests_timeout = 45
 ox.settings.http_user_agent = "GreyfieldFinder/1.0 (sammywoodstock@gmail.com)"
 ox.settings.overpass_url = "https://overpass.openstreetmap.ru/api/interpreter"
+
+BASE_DIR = Path(__file__).resolve().parent
+WOODSTOCK_CACHE = BASE_DIR / "cached" / "woodstock.json"
 
 app = FastAPI(title="Greyfield Finder API")
 
