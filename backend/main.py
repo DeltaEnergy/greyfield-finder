@@ -7,11 +7,10 @@ from math import radians, sin, cos, sqrt, atan2
 
 ox.settings.use_cache = True
 ox.settings.log_console = True
-ox.settings.requests_timeout = 180
+ox.settings.requests_timeout = 45
 ox.settings.http_user_agent = "GreyfieldFinder/1.0 (sammywoodstock@gmail.com)"
 
-# Use a non-default Overpass endpoint because overpass-api.de may refuse hosted requests.
-ox.settings.overpass_url = "https://overpass.kumi.systems/api"
+ox.settings.overpass_url = "https://overpass.openstreetmap.ru/api/interpreter"
 
 app = FastAPI(title="Greyfield Finder API")
 
