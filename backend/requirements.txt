@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+osmnx
+geopandas
+shapely
+pandas
+scikit-learn
