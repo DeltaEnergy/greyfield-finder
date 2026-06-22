@@ -1,4 +1,4 @@
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = "https://greyfield-finder-api.onrender.com";
 
 const map = L.map("map").setView([43.1306, -80.7460], 13);
 
