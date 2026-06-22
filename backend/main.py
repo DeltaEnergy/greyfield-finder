@@ -10,6 +10,9 @@ ox.settings.log_console = True
 ox.settings.requests_timeout = 180
 ox.settings.http_user_agent = "GreyfieldFinder/1.0 (sammywoodstock@gmail.com)"
 
+# Use a non-default Overpass endpoint because overpass-api.de may refuse hosted requests.
+ox.settings.overpass_url = "https://overpass.kumi.systems/api"
+
 app = FastAPI(title="Greyfield Finder API")
 
 app.add_middleware(
