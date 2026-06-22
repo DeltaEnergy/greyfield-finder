@@ -346,3 +346,18 @@ placeInput.addEventListener("keydown", (event) => {
     analyzePlace();
   }
 });
+document.querySelectorAll(".cached-city-btn").forEach((button) => {
+  button.addEventListener("click", () => {
+    const place = button.dataset.place;
+
+    placeInput.value = place;
+
+    document.querySelectorAll(".cached-city-btn").forEach((btn) => {
+      btn.classList.remove("active");
+    });
+
+    button.classList.add("active");
+
+    analyzePlace();
+  });
+});
