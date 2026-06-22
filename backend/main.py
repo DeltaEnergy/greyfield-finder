@@ -9,7 +9,6 @@ ox.settings.use_cache = True
 ox.settings.log_console = True
 ox.settings.requests_timeout = 45
 ox.settings.http_user_agent = "GreyfieldFinder/1.0 (sammywoodstock@gmail.com)"
-
 ox.settings.overpass_url = "https://overpass.openstreetmap.ru/api/interpreter"
 
 app = FastAPI(title="Greyfield Finder API")
