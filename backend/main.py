@@ -5,6 +5,11 @@ import geopandas as gpd
 import pandas as pd
 from math import radians, sin, cos, sqrt, atan2
 
+ox.settings.use_cache = True
+ox.settings.log_console = True
+ox.settings.requests_timeout = 180
+ox.settings.http_user_agent = "GreyfieldFinder/1.0 (sammywoodstock@gmail.com)"
+
 app = FastAPI(title="Greyfield Finder API")
 
 app.add_middleware(

@@ -277,9 +277,10 @@ async function analyzePlace() {
 
     const data = await response.json();
 
-    if (data.error) {
-      throw new Error(data.message || "Something went wrong.");
-    }
+   if (data.error) {
+  const detailText = data.details ? ` Details: ${data.details}` : "";
+  throw new Error(`${data.message || "Something went wrong."}${detailText}`);
+}
 
     const geojson = JSON.parse(data.geojson);
     latestFeatures = geojson.features;
