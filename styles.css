@@ -125,6 +125,44 @@ body {
   font-size: 1rem;
 }
 
+.cached-cities {
+  margin-top: 14px;
+}
+
+.cached-label {
+  margin: 0 0 8px;
+  font-size: 0.85rem;
+  color: #9ca3af;
+}
+
+.cached-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cached-city-btn {
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.85);
+  color: #e5e7eb;
+  border-radius: 999px;
+  padding: 7px 11px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+}
+
+.cached-city-btn:hover {
+  border-color: rgba(96, 165, 250, 0.9);
+  background: rgba(30, 41, 59, 0.95);
+  transform: translateY(-1px);
+}
+
+.cached-city-btn.active {
+  border-color: rgba(34, 197, 94, 0.95);
+  background: rgba(22, 101, 52, 0.35);
+}
+
 .search-section {
   margin-top: 22px;
 }
