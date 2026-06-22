@@ -17,8 +17,35 @@ ox.settings.http_user_agent = "GreyfieldFinder/1.0 sammywoodstock@gmail.com"
 
 
 BASE_DIR = Path(__file__).resolve().parent
-WOODSTOCK_CACHE = BASE_DIR / "cached" / "woodstock.json"
+CACHE_DIR = BASE_DIR / "cached"
 
+CACHED_PLACES = {
+    "woodstock": CACHE_DIR / "woodstock.json",
+    "woodstock ontario": CACHE_DIR / "woodstock.json",
+    "woodstock ontario canada": CACHE_DIR / "woodstock.json",
+    "woodstock oxford county ontario canada": CACHE_DIR / "woodstock.json",
+
+    "ingersoll": CACHE_DIR / "ingersoll.json",
+    "ingersoll ontario": CACHE_DIR / "ingersoll.json",
+    "ingersoll ontario canada": CACHE_DIR / "ingersoll.json",
+    "ingersoll oxford county ontario canada": CACHE_DIR / "ingersoll.json",
+
+    "tillsonburg": CACHE_DIR / "tillsonburg.json",
+    "tillsonburg ontario": CACHE_DIR / "tillsonburg.json",
+    "tillsonburg ontario canada": CACHE_DIR / "tillsonburg.json",
+    "tillsonburg oxford county ontario canada": CACHE_DIR / "tillsonburg.json",
+
+    "st thomas": CACHE_DIR / "st-thomas.json",
+    "st. thomas": CACHE_DIR / "st-thomas.json",
+    "st thomas ontario": CACHE_DIR / "st-thomas.json",
+    "st. thomas ontario": CACHE_DIR / "st-thomas.json",
+    "st thomas ontario canada": CACHE_DIR / "st-thomas.json",
+    "st. thomas ontario canada": CACHE_DIR / "st-thomas.json",
+
+    "stratford": CACHE_DIR / "stratford.json",
+    "stratford ontario": CACHE_DIR / "stratford.json",
+    "stratford ontario canada": CACHE_DIR / "stratford.json",
+}
 
 app = FastAPI(title="Greyfield Finder API")
 
@@ -46,10 +73,9 @@ def normalize_place(place: str) -> str:
     return " ".join(place.strip().lower().replace(",", " ").split())
 
 
-def is_woodstock_query(place: str) -> bool:
+def get_cached_place_path(place: str):
     normalized = normalize_place(place)
-    normalized_names = {normalize_place(name) for name in WOODSTOCK_NAMES}
-    return normalized in normalized_names
+    return CACHED_PLACES.get(normalized)
 
 
 def haversine_m(lat1, lon1, lat2, lon2):
@@ -165,12 +191,14 @@ def root():
 
 @app.get("/analyze")
 def analyze_place(place: str = Query(..., description="Example: Woodstock, Ontario, Canada")):
-    if is_woodstock_query(place) and WOODSTOCK_CACHE.exists():
-        with open(WOODSTOCK_CACHE, "r", encoding="utf-8-sig") as f:
+    cached_path = get_cached_place_path(place)
+
+    if cached_path and cached_path.exists():
+        with open(cached_path, "r", encoding="utf-8-sig") as f:
             cached_data = json.load(f)
 
         cached_data["source"] = "cached"
-        cached_data["note"] = "This result uses a precomputed Woodstock analysis for reliable public demo performance."
+        cached_data["note"] = "This result uses a precomputed analysis for reliable public demo performance."
         return cached_data
 
     parking_tags = {"amenity": "parking"}
