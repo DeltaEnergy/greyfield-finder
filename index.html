@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Greyfield Finder</title>
+
+  <!-- Inter font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet"
+  >
+
+  <!-- App styles -->
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- Leaflet styles -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+</head>
+
+<body>
+  <div id="loading-overlay" class="loading-overlay hidden">
+    <div class="spinner"></div>
+    <p>Analyzing parking lots...</p>
+    <span>This can take a moment while OpenStreetMap data loads.</span>
+  </div>
+
+  <main class="app-shell">
+    <section class="sidebar">
+      <header class="app-header">
+        <div class="logo-card">
+          <img
+            src="assets/greyfield-logo.png"
+            alt="Greyfield Finder"
+            class="brand-logo"
+          />
+        </div>
+
+        <h1 class="sr-only">Greyfield Finder</h1>
+
+        <p class="subtitle">
+          Identify surface parking lots that may warrant further review for
+          infill, mixed-use development, or greyfield redevelopment.
+        </p>
+      </header>
+
+      <div class="search-section">
+        <label for="place-input">Enter a place</label>
+
+        <div class="search-row">
+          <input
+            id="place-input"
+            type="text"
+            value="Woodstock, Ontario, Canada"
+            placeholder="Woodstock, Ontario, Canada"
+          />
+          <button id="analyze-btn">Analyze</button>
+        </div>
+
+        <button id="export-btn" class="secondary-btn" disabled>
+          Export CSV
+        </button>
+      </div>
+
+      <div class="control-group">
+        <label for="map-style-select" class="control-label">Map style</label>
+
+        <select id="map-style-select" class="map-style-select">
+          <option value="dark">Dark dashboard</option>
+          <option value="light">Light streets</option>
+          <option value="voyager">Clean atlas</option>
+          <option value="osm">OpenStreetMap default</option>
+        </select>
+      </div>
+
+      <p id="status" class="status">Ready.</p>
+
+      <div class="legend">
+        <div class="legend-item">
+          <span class="legend-swatch high"></span>
+          High potential
+        </div>
+
+        <div class="legend-item">
+          <span class="legend-swatch medium"></span>
+          Medium potential
+        </div>
+
+        <div class="legend-item">
+          <span class="legend-swatch low"></span>
+          Low potential
+        </div>
+      </div>
+
+      <details class="method-note" open>
+        <summary>
+          <span>Methodology</span>
+          <small>100-point screening score</small>
+        </summary>
+
+        <p>
+          Scores estimate redevelopment suitability using open-data indicators
+          related to lot scale, accessibility, and surrounding land-use context.
+        </p>
+
+        <div class="score-breakdown">
+          <div class="score-row">
+            <div>
+              <strong>Lot area</strong>
+              <span>Larger surface lots receive higher scores</span>
+            </div>
+            <b>30</b>
+          </div>
+
+          <div class="score-row">
+            <div>
+              <strong>Town centre proximity</strong>
+              <span>Closer sites support downtown infill potential</span>
+            </div>
+            <b>20</b>
+          </div>
+
+          <div class="score-row">
+            <div>
+              <strong>Transit proximity</strong>
+              <span>Nearby stops improve redevelopment suitability</span>
+            </div>
+            <b>20</b>
+          </div>
+
+          <div class="score-row">
+            <div>
+              <strong>Daily-needs proximity</strong>
+              <span>Nearby amenities support infill suitability</span>
+            </div>
+            <b>20</b>
+          </div>
+
+          <div class="score-row">
+            <div>
+              <strong>Commercial context</strong>
+              <span>Existing commercial areas may support mixed-use infill</span>
+            </div>
+            <b>10</b>
+          </div>
+        </div>
+
+        <p class="method-subnote">
+          Amenity Access Score is calculated separately using proximity to
+          groceries, health services, civic services, parks, transit, and
+          commercial areas.
+        </p>
+      </details>
+
+      <h2>Top sites</h2>
+
+      <div id="results-list" class="results-list"></div>
+
+      <p class="disclaimer">
+        Screening-level results only. Scores depend on OpenStreetMap data quality
+        and do not account for zoning, ownership, servicing, environmental
+        constraints, heritage, parcel fabric, market feasibility, or development
+        approvals.
+      </p>
+    </section>
+
+    <section class="map-panel">
+      <div id="map"></div>
+    </section>
+  </main>
+
+  <!-- Leaflet script -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- App script -->
+  <script src="app.js"></script>
+</body>
+</html>
+```
