@@ -67,20 +67,25 @@ progressStartTime = Date.now();
 currentProgress = 0;
 
 if (loadingOverlay) {
-loadingOverlay.classList.remove("hidden");
+    loadingOverlay.innerHTML = `
+      <div class="loading-box">
+        <div class="spinner"></div>
 
-loadingOverlay.innerHTML = `
-  <div class="loading-box">
-    <div class="spinner"></div>
-    <p>Analyzing parking lots...</p>
+        <div class="loading-copy">
+          <p class="loading-title">Analyzing parking lots</p>
+          <p class="loading-subtitle">Scoring redevelopment potential and nearby amenities...</p>
+        </div>
 
-    <div class="progress-bar">
-      <div class="progress-fill" id="progress-fill"></div>
-    </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
 
-    <p class="progress-text" id="progress-text">0%</p>
-  </div>
-`;
+        <div class="progress-row">
+          <span>Processing</span>
+          <span id="progress-text">0%</span>
+        </div>
+      </div>
+    `;
 
 }
 
