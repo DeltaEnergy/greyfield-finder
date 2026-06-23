@@ -50,6 +50,79 @@ let parkingLayer = null;
 let featureLayers = [];
 let latestFeatures = [];
 
+const progressWrap = document.getElementById("progress-wrap");
+const progressFill = document.getElementById("progress-fill");
+const progressText = document.getElementById("progress-text");
+
+let progressInterval;
+let currentProgress = 0;
+
+function startProgress() {
+  currentProgress = 0;
+
+  if (progressWrap) {
+    progressWrap.style.display = "block";
+  }
+
+  if (progressFill) {
+    progressFill.style.width = "0%";
+  }
+
+  if (progressText) {
+    progressText.textContent = "0%";
+  }
+
+  clearInterval(progressInterval);
+
+  progressInterval = setInterval(() => {
+    if (currentProgress < 65) {
+      currentProgress += Math.floor(Math.random() * 8) + 4;
+    } else if (currentProgress < 88) {
+      currentProgress += Math.floor(Math.random() * 4) + 1;
+    } else if (currentProgress < 95) {
+      currentProgress += 1;
+    }
+
+    currentProgress = Math.min(currentProgress, 95);
+
+    if (progressFill) {
+      progressFill.style.width = `${currentProgress}%`;
+    }
+
+    if (progressText) {
+      progressText.textContent = `${currentProgress}%`;
+    }
+  }, 350);
+}
+
+function finishProgress() {
+  clearInterval(progressInterval);
+
+  currentProgress = 100;
+
+  if (progressFill) {
+    progressFill.style.width = "100%";
+  }
+
+  if (progressText) {
+    progressText.textContent = "100%";
+  }
+
+  setTimeout(() => {
+    if (progressWrap) {
+      progressWrap.style.display = "none";
+    }
+
+    if (progressFill) {
+      progressFill.style.width = "0%";
+    }
+
+    if (progressText) {
+      progressText.textContent = "0%";
+    }
+  }, 700);
+}
+
 const placeInput = document.getElementById("place-input");
 const analyzeBtn = document.getElementById("analyze-btn");
 const exportBtn = document.getElementById("export-btn");
@@ -257,12 +330,18 @@ function exportCsv() {
 }
 
 async function analyzePlace() {
-  const place = placeInput.value.trim();
+  startProgress();
 
-  if (!place) {
-    statusEl.textContent = "Enter a place first.";
-    return;
+  try {
+    // existing fetch/analyze code
+
+    finishProgress();
+  } catch (error) {
+    finishProgress();
+
+    // existing error handling
   }
+}
 
   loadingOverlay.classList.remove("hidden");
   analyzeBtn.disabled = true;
@@ -326,7 +405,6 @@ renderResultsList(geojson.features);
     analyzeBtn.disabled = false;
     loadingOverlay.classList.add("hidden");
   }
-}
 
 mapStyleSelect.addEventListener("change", () => {
   const selectedStyle = mapStyleSelect.value;
