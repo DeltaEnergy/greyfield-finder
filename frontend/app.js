@@ -58,41 +58,34 @@ const resultsList = document.getElementById("results-list");
 const loadingOverlay = document.getElementById("loading-overlay");
 const mapStyleSelect = document.getElementById("map-style-select");
 
-let progressWrap = document.getElementById("progress-wrap");
-let progressFill = document.getElementById("progress-fill");
-let progressText = document.getElementById("progress-text");
-
 let progressInterval;
 let currentProgress = 0;
 let progressStartTime = 0;
 
-function ensureProgressBar() {
-if (progressWrap && progressFill && progressText) {
-return;
-}
-
-progressWrap = document.createElement("div");
-progressWrap.className = "progress-wrap loading-progress";
-progressWrap.id = "progress-wrap";
-
-progressWrap.innerHTML = `     <div class="progress-card">       <p class="progress-title">Analyzing greyfield sites...</p>       <div class="progress-bar">         <div class="progress-fill" id="progress-fill"></div>       </div>       <p class="progress-text" id="progress-text">0%</p>     </div>
-  `;
-
-document.body.appendChild(progressWrap);
-
-progressFill = document.getElementById("progress-fill");
-progressText = document.getElementById("progress-text");
-}
-
 function startProgress() {
-ensureProgressBar();
-
 progressStartTime = Date.now();
 currentProgress = 0;
 
-progressWrap.style.display = "block";
-progressFill.style.width = "0%";
-progressText.textContent = "0%";
+if (loadingOverlay) {
+loadingOverlay.classList.remove("hidden");
+
+loadingOverlay.innerHTML = `
+  <div class="loading-box">
+    <div class="spinner"></div>
+    <p>Analyzing parking lots...</p>
+
+    <div class="progress-bar">
+      <div class="progress-fill" id="progress-fill"></div>
+    </div>
+
+    <p class="progress-text" id="progress-text">0%</p>
+  </div>
+`;
+
+}
+
+const progressFill = document.getElementById("progress-fill");
+const progressText = document.getElementById("progress-text");
 
 clearInterval(progressInterval);
 
@@ -108,32 +101,42 @@ currentProgress += 1;
 
 currentProgress = Math.min(currentProgress, 95);
 
-progressFill.style.width = `${currentProgress}%`;
-progressText.textContent = `${currentProgress}%`;
+if (progressFill) {
+  progressFill.style.width = `${currentProgress}%`;
+}
 
+if (progressText) {
+  progressText.textContent = `${currentProgress}%`;
+}
 
 }, 300);
 }
 
 function finishProgress() {
-ensureProgressBar();
-
 clearInterval(progressInterval);
 
-currentProgress = 100;
+const progressFill = document.getElementById("progress-fill");
+const progressText = document.getElementById("progress-text");
+
+if (progressFill) {
 progressFill.style.width = "100%";
+}
+
+if (progressText) {
 progressText.textContent = "100%";
+}
 
 const elapsed = Date.now() - progressStartTime;
 const minimumVisibleTime = 1200;
 const remainingTime = Math.max(0, minimumVisibleTime - elapsed);
 
 setTimeout(() => {
-progressWrap.style.display = "none";
-progressFill.style.width = "0%";
-progressText.textContent = "0%";
+if (loadingOverlay) {
+loadingOverlay.classList.add("hidden");
+}
 }, remainingTime + 500);
 }
+
 
 
 function getScoreClass(score) {
