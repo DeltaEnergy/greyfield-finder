@@ -9,6 +9,9 @@ import geopandas as gpd
 import osmnx as ox
 import pandas as pd
 
+from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.responses import ORJSONResponse
+
 
 ox.settings.use_cache = True
 ox.settings.log_console = True
@@ -47,7 +50,7 @@ CACHED_PLACES = {
     "stratford ontario canada": CACHE_DIR / "stratford.json",
 }
 
-app = FastAPI(title="Greyfield Finder API")
+app = FastAPI(default_response_class=ORJSONResponse)
 
 app.add_middleware(
     CORSMiddleware,
@@ -56,7 +59,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 WOODSTOCK_NAMES = {
     "woodstock",
