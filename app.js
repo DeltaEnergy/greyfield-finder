@@ -380,13 +380,20 @@ document.querySelectorAll(".cached-city-btn").forEach((button) => {
     analyzePlace();
   });
 });
+
 const mobileSidebarToggle = document.getElementById("mobile-sidebar-toggle");
+const mobileToggleText = document.querySelector(".mobile-toggle-text");
+const mobileToggleIcon = document.querySelector(".mobile-toggle-icon");
 
 function closeMobileSidebar() {
   document.body.classList.remove("sidebar-open");
 
-  if (mobileSidebarToggle) {
-    mobileSidebarToggle.textContent = "Search & Results";
+  if (mobileToggleText) {
+    mobileToggleText.textContent = "Search & Results";
+  }
+
+  if (mobileToggleIcon) {
+    mobileToggleIcon.textContent = "⌕";
   }
 
   setTimeout(() => {
@@ -397,8 +404,12 @@ function closeMobileSidebar() {
 function openMobileSidebar() {
   document.body.classList.add("sidebar-open");
 
-  if (mobileSidebarToggle) {
-    mobileSidebarToggle.textContent = "Close";
+  if (mobileToggleText) {
+    mobileToggleText.textContent = "Close Panel";
+  }
+
+  if (mobileToggleIcon) {
+    mobileToggleIcon.textContent = "✕";
   }
 
   setTimeout(() => {
@@ -415,15 +426,3 @@ if (mobileSidebarToggle) {
     }
   });
 }
-
-window.addEventListener("load", () => {
-  setTimeout(() => {
-    map.invalidateSize();
-  }, 300);
-});
-
-window.addEventListener("resize", () => {
-  setTimeout(() => {
-    map.invalidateSize();
-  }, 150);
-});
