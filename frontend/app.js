@@ -382,23 +382,48 @@ document.querySelectorAll(".cached-city-btn").forEach((button) => {
 });
 const mobileSidebarToggle = document.getElementById("mobile-sidebar-toggle");
 
+function closeMobileSidebar() {
+  document.body.classList.remove("sidebar-open");
+
+  if (mobileSidebarToggle) {
+    mobileSidebarToggle.textContent = "Search & Results";
+  }
+
+  setTimeout(() => {
+    map.invalidateSize();
+  }, 250);
+}
+
+function openMobileSidebar() {
+  document.body.classList.add("sidebar-open");
+
+  if (mobileSidebarToggle) {
+    mobileSidebarToggle.textContent = "Close";
+  }
+
+  setTimeout(() => {
+    map.invalidateSize();
+  }, 250);
+}
+
 if (mobileSidebarToggle) {
   mobileSidebarToggle.addEventListener("click", () => {
-    document.body.classList.toggle("sidebar-open");
-
     if (document.body.classList.contains("sidebar-open")) {
-      mobileSidebarToggle.textContent = "Hide filters / results";
+      closeMobileSidebar();
     } else {
-      mobileSidebarToggle.textContent = "Filters / Results";
+      openMobileSidebar();
     }
-
-    setTimeout(() => {
-      map.invalidateSize();
-    }, 250);
   });
 }
+
 window.addEventListener("load", () => {
   setTimeout(() => {
     map.invalidateSize();
   }, 300);
+});
+
+window.addEventListener("resize", () => {
+  setTimeout(() => {
+    map.invalidateSize();
+  }, 150);
 });
