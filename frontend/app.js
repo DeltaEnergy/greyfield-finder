@@ -330,23 +330,79 @@ function exportCsv() {
 }
 
 async function analyzePlace() {
-  startProgress();
+  const place = placeInput.value.trim();
 
-  try {
-    // existing fetch/analyze code
-
-    finishProgress();
-  } catch (error) {
-    finishProgress();
-
-    // existing error handling
+  if (!place) {
+    statusEl.textContent = "Enter a place to analyze.";
+    return;
   }
-}
+
+  startProgress();
 
   loadingOverlay.classList.remove("hidden");
   analyzeBtn.disabled = true;
   exportBtn.disabled = true;
   statusEl.textContent = `Analyzing ${place}. This may take a moment...`;
+  resultsList.innerHTML = "";
+  latestFeatures = [];
+
+  try {
+    const url = `${API_BASE}/analyze?place=${encodeURIComponent(place)}`;
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`API returned ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (data.error) {
+      const detailText = data.details ? ` Details: ${data.details}` : "";
+      throw new Error(`${data.message || "Something went wrong."}${detailText}`);
+    }
+
+    const geojson = JSON.parse(data.geojson);
+    latestFeatures = geojson.features;
+
+    if (parkingLayer) {
+      map.removeLayer(parkingLayer);
+    }
+
+    featureLayers = [];
+
+    parkingLayer = L.geoJSON(geojson, {
+      style: styleFeature,
+      onEachFeature: (feature, layer) => {
+        layer.bindPopup(popupHtml(feature.properties));
+        featureLayers.push(layer);
+      }
+    }).addTo(map);
+
+    if (geojson.features.length > 0) {
+      map.fitBounds(parkingLayer.getBounds(), { padding: [20, 20] });
+    }
+
+    setTimeout(() => {
+      map.invalidateSize();
+
+      if (parkingLayer && geojson.features.length > 0) {
+        map.fitBounds(parkingLayer.getBounds(), { padding: [20, 20] });
+      }
+    }, 300);
+
+    renderResultsList(geojson.features);
+
+    statusEl.textContent = `Found ${data.count} candidate parking lots in ${data.place}.`;
+    exportBtn.disabled = false;
+  } catch (error) {
+    console.error("Analysis error:", error);
+    statusEl.textContent = `Analysis failed: ${error.message}`;
+  } finally {
+    finishProgress();
+    analyzeBtn.disabled = false;
+    loadingOverlay.classList.add("hidden");
+  }
+}
   resultsList.innerHTML = "";
   latestFeatures = [];
 
