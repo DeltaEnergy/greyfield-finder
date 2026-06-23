@@ -901,7 +901,7 @@ h2 {
   color: #9ca3af;
   text-align: right;
 }
-/* Final loading popup override */
+/* Final loading popup override - no card box */
 .loading-overlay {
   display: flex !important;
   align-items: center !important;
@@ -909,56 +909,63 @@ h2 {
   gap: 0 !important;
   text-align: center !important;
   padding: 24px !important;
+  background:
+    radial-gradient(circle at center, rgba(125, 211, 252, 0.11), transparent 22rem),
+    rgba(8, 11, 18, 0.86) !important;
+  backdrop-filter: blur(8px) !important;
 }
 
 .loading-box {
-  width: min(380px, 88vw) !important;
-  max-width: 380px !important;
-  padding: 26px 24px 22px !important;
-  border-radius: 24px !important;
-  background: rgba(15, 23, 42, 0.96) !important;
-  border: 1px solid rgba(148, 163, 184, 0.28) !important;
-  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.6) !important;
+  width: min(420px, 88vw) !important;
+  max-width: 420px !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
   text-align: center !important;
 }
 
 .loading-box .spinner {
-  width: 62px !important;
-  height: 62px !important;
-  margin: 0 auto 18px !important;
+  width: 68px !important;
+  height: 68px !important;
+  margin: 0 auto 20px !important;
 }
 
 .loading-copy {
-  margin-bottom: 18px !important;
+  margin-bottom: 20px !important;
 }
 
 .loading-overlay .loading-title {
   margin: 0 !important;
   color: #f8fafc !important;
-  font-size: 1.15rem !important;
-  font-weight: 850 !important;
-  letter-spacing: -0.02em !important;
-  line-height: 1.2 !important;
+  font-size: 1.35rem !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.03em !important;
+  line-height: 1.15 !important;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.45) !important;
 }
 
 .loading-overlay .loading-subtitle {
-  margin: 7px auto 0 !important;
-  max-width: 300px !important;
-  color: #94a3b8 !important;
-  font-size: 0.86rem !important;
-  line-height: 1.4 !important;
-  font-weight: 600 !important;
+  margin: 8px auto 0 !important;
+  max-width: 360px !important;
+  color: #b9d2f0 !important;
+  font-size: 0.98rem !important;
+  line-height: 1.35 !important;
+  font-weight: 700 !important;
   letter-spacing: 0 !important;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.45) !important;
 }
 
 .loading-box .progress-bar {
   width: 100% !important;
-  height: 11px !important;
-  margin-top: 16px !important;
+  height: 10px !important;
+  margin-top: 18px !important;
   border-radius: 999px !important;
   overflow: hidden !important;
-  background: rgba(30, 41, 59, 0.95) !important;
-  border: 1px solid rgba(148, 163, 184, 0.24) !important;
+  background: rgba(15, 23, 42, 0.88) !important;
+  border: 1px solid rgba(148, 163, 184, 0.34) !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35) !important;
 }
 
 .loading-box .progress-fill {
@@ -975,14 +982,15 @@ h2 {
   align-items: center !important;
   gap: 12px !important;
   margin-top: 10px !important;
-  color: #cbd5e1 !important;
-  font-size: 0.8rem !important;
-  font-weight: 700 !important;
+  color: #dbeafe !important;
+  font-size: 0.86rem !important;
+  font-weight: 800 !important;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5) !important;
 }
 
 .loading-overlay .progress-row span {
-  color: #cbd5e1 !important;
-  font-size: 0.8rem !important;
+  color: #dbeafe !important;
+  font-size: 0.86rem !important;
 }
 
 .loading-overlay .progress-row span:last-child {
