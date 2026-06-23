@@ -58,78 +58,83 @@ const resultsList = document.getElementById("results-list");
 const loadingOverlay = document.getElementById("loading-overlay");
 const mapStyleSelect = document.getElementById("map-style-select");
 
-const progressWrap = document.getElementById("progress-wrap");
-const progressFill = document.getElementById("progress-fill");
-const progressText = document.getElementById("progress-text");
+let progressWrap = document.getElementById("progress-wrap");
+let progressFill = document.getElementById("progress-fill");
+let progressText = document.getElementById("progress-text");
 
 let progressInterval;
 let currentProgress = 0;
+let progressStartTime = 0;
+
+function ensureProgressBar() {
+if (progressWrap && progressFill && progressText) {
+return;
+}
+
+progressWrap = document.createElement("div");
+progressWrap.className = "progress-wrap loading-progress";
+progressWrap.id = "progress-wrap";
+
+progressWrap.innerHTML = `     <div class="progress-card">       <p class="progress-title">Analyzing greyfield sites...</p>       <div class="progress-bar">         <div class="progress-fill" id="progress-fill"></div>       </div>       <p class="progress-text" id="progress-text">0%</p>     </div>
+  `;
+
+document.body.appendChild(progressWrap);
+
+progressFill = document.getElementById("progress-fill");
+progressText = document.getElementById("progress-text");
+}
 
 function startProgress() {
-  currentProgress = 0;
+ensureProgressBar();
 
-  if (progressWrap) {
-    progressWrap.style.display = "block";
-  }
+progressStartTime = Date.now();
+currentProgress = 0;
 
-  if (progressFill) {
-    progressFill.style.width = "0%";
-  }
+progressWrap.style.display = "block";
+progressFill.style.width = "0%";
+progressText.textContent = "0%";
 
-  if (progressText) {
-    progressText.textContent = "0%";
-  }
+clearInterval(progressInterval);
 
-  clearInterval(progressInterval);
+progressInterval = setInterval(() => {
+if (currentProgress < 65) {
+currentProgress += Math.floor(Math.random() * 8) + 4;
+} else if (currentProgress < 88) {
+currentProgress += Math.floor(Math.random() * 4) + 1;
+} else if (currentProgress < 95) {
+currentProgress += 1;
+}
 
-  progressInterval = setInterval(() => {
-    if (currentProgress < 65) {
-      currentProgress += Math.floor(Math.random() * 8) + 4;
-    } else if (currentProgress < 88) {
-      currentProgress += Math.floor(Math.random() * 4) + 1;
-    } else if (currentProgress < 95) {
-      currentProgress += 1;
-    }
 
-    currentProgress = Math.min(currentProgress, 95);
+currentProgress = Math.min(currentProgress, 95);
 
-    if (progressFill) {
-      progressFill.style.width = `${currentProgress}%`;
-    }
+progressFill.style.width = `${currentProgress}%`;
+progressText.textContent = `${currentProgress}%`;
 
-    if (progressText) {
-      progressText.textContent = `${currentProgress}%`;
-    }
-  }, 350);
+
+}, 300);
 }
 
 function finishProgress() {
-  clearInterval(progressInterval);
+ensureProgressBar();
 
-  currentProgress = 100;
+clearInterval(progressInterval);
 
-  if (progressFill) {
-    progressFill.style.width = "100%";
-  }
+currentProgress = 100;
+progressFill.style.width = "100%";
+progressText.textContent = "100%";
 
-  if (progressText) {
-    progressText.textContent = "100%";
-  }
+const elapsed = Date.now() - progressStartTime;
+const minimumVisibleTime = 1200;
+const remainingTime = Math.max(0, minimumVisibleTime - elapsed);
 
-  setTimeout(() => {
-    if (progressWrap) {
-      progressWrap.style.display = "none";
-    }
-
-    if (progressFill) {
-      progressFill.style.width = "0%";
-    }
-
-    if (progressText) {
-      progressText.textContent = "0%";
-    }
-  }, 700);
+setTimeout(() => {
+progressWrap.style.display = "none";
+progressFill.style.width = "0%";
+progressText.textContent = "0%";
+}, remainingTime + 500);
 }
+
 
 function getScoreClass(score) {
   if (score >= 75) return "High";
