@@ -12,7 +12,7 @@ const basemaps = {
     url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
     options: {
       maxZoom: 19,
-      attribution: "&copy; OpenStreetMap contributors &copy; CARTO"
+      attribution: "© OpenStreetMap contributors © CARTO"
     }
   },
   light: {
@@ -20,7 +20,7 @@ const basemaps = {
     url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
     options: {
       maxZoom: 19,
-      attribution: "&copy; OpenStreetMap contributors &copy; CARTO"
+      attribution: "© OpenStreetMap contributors © CARTO"
     }
   },
   voyager: {
@@ -28,7 +28,7 @@ const basemaps = {
     url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
     options: {
       maxZoom: 19,
-      attribution: "&copy; OpenStreetMap contributors &copy; CARTO"
+      attribution: "© OpenStreetMap contributors © CARTO"
     }
   },
   osm: {
@@ -36,7 +36,7 @@ const basemaps = {
     url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
     options: {
       maxZoom: 19,
-      attribution: "&copy; OpenStreetMap contributors"
+      attribution: "© OpenStreetMap contributors"
     }
   }
 };
@@ -49,6 +49,14 @@ let currentBaseLayer = L.tileLayer(
 let parkingLayer = null;
 let featureLayers = [];
 let latestFeatures = [];
+
+const placeInput = document.getElementById("place-input");
+const analyzeBtn = document.getElementById("analyze-btn");
+const exportBtn = document.getElementById("export-btn");
+const statusEl = document.getElementById("status");
+const resultsList = document.getElementById("results-list");
+const loadingOverlay = document.getElementById("loading-overlay");
+const mapStyleSelect = document.getElementById("map-style-select");
 
 const progressWrap = document.getElementById("progress-wrap");
 const progressFill = document.getElementById("progress-fill");
@@ -122,14 +130,6 @@ function finishProgress() {
     }
   }, 700);
 }
-
-const placeInput = document.getElementById("place-input");
-const analyzeBtn = document.getElementById("analyze-btn");
-const exportBtn = document.getElementById("export-btn");
-const statusEl = document.getElementById("status");
-const resultsList = document.getElementById("results-list");
-const loadingOverlay = document.getElementById("loading-overlay");
-const mapStyleSelect = document.getElementById("map-style-select");
 
 function getScoreClass(score) {
   if (score >= 75) return "High";
@@ -315,7 +315,9 @@ function exportCsv() {
   });
 
   const csv = rows
-    .map(row => row.map(value => `"${String(value ?? "").replaceAll('"', '""')}"`).join(","))
+    .map((row) =>
+      row.map((value) => `"${String(value ?? "").replaceAll('"', '""')}"`).join(",")
+    )
     .join("\n");
 
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -330,18 +332,14 @@ function exportCsv() {
 }
 
 async function analyzePlace() {
-  startProgress();
+  const place = placeInput.value.trim();
 
-  try {
-    // existing fetch/analyze code
-
-    finishProgress();
-  } catch (error) {
-    finishProgress();
-
-    // existing error handling
+  if (!place) {
+    statusEl.textContent = "Enter a place to analyze.";
+    return;
   }
-}
+
+  startProgress();
 
   loadingOverlay.classList.remove("hidden");
   analyzeBtn.disabled = true;
@@ -360,10 +358,10 @@ async function analyzePlace() {
 
     const data = await response.json();
 
-   if (data.error) {
-  const detailText = data.details ? ` Details: ${data.details}` : "";
-  throw new Error(`${data.message || "Something went wrong."}${detailText}`);
-}
+    if (data.error) {
+      const detailText = data.details ? ` Details: ${data.details}` : "";
+      throw new Error(`${data.message || "Something went wrong."}${detailText}`);
+    }
 
     const geojson = JSON.parse(data.geojson);
     latestFeatures = geojson.features;
@@ -382,19 +380,19 @@ async function analyzePlace() {
       }
     }).addTo(map);
 
-if (geojson.features.length > 0) {
-  map.fitBounds(parkingLayer.getBounds(), { padding: [20, 20] });
-}
+    if (geojson.features.length > 0) {
+      map.fitBounds(parkingLayer.getBounds(), { padding: [20, 20] });
+    }
 
-setTimeout(() => {
-  map.invalidateSize();
+    setTimeout(() => {
+      map.invalidateSize();
 
-  if (parkingLayer && geojson.features.length > 0) {
-    map.fitBounds(parkingLayer.getBounds(), { padding: [20, 20] });
-  }
-}, 300);
+      if (parkingLayer && geojson.features.length > 0) {
+        map.fitBounds(parkingLayer.getBounds(), { padding: [20, 20] });
+      }
+    }, 300);
 
-renderResultsList(geojson.features);
+    renderResultsList(geojson.features);
 
     statusEl.textContent = `Found ${data.count} candidate parking lots in ${data.place}.`;
     exportBtn.disabled = false;
@@ -402,39 +400,56 @@ renderResultsList(geojson.features);
     console.error("Analysis error:", error);
     statusEl.textContent = `Analysis failed: ${error.message}`;
   } finally {
+    finishProgress();
     analyzeBtn.disabled = false;
     loadingOverlay.classList.add("hidden");
   }
+}
 
-mapStyleSelect.addEventListener("change", () => {
-  const selectedStyle = mapStyleSelect.value;
-  const selectedBasemap = basemaps[selectedStyle];
+if (mapStyleSelect) {
+  mapStyleSelect.addEventListener("change", () => {
+    const selectedStyle = mapStyleSelect.value;
+    const selectedBasemap = basemaps[selectedStyle];
 
-  if (!selectedBasemap) {
-    return;
-  }
+    if (!selectedBasemap) {
+      return;
+    }
 
-  if (currentBaseLayer) {
-    map.removeLayer(currentBaseLayer);
-  }
+    if (currentBaseLayer) {
+      map.removeLayer(currentBaseLayer);
+    }
 
-  currentBaseLayer = L.tileLayer(
-    selectedBasemap.url,
-    selectedBasemap.options
-  ).addTo(map);
+    currentBaseLayer = L.tileLayer(
+      selectedBasemap.url,
+      selectedBasemap.options
+    ).addTo(map);
 
-  if (parkingLayer) {
-    parkingLayer.bringToFront();
-  }
-});
+    if (parkingLayer) {
+      parkingLayer.bringToFront();
+    }
+  });
+}
 
-analyzeBtn.addEventListener("click", analyzePlace);
-exportBtn.addEventListener("click", exportCsv);
+if (analyzeBtn) {
+  analyzeBtn.addEventListener("click", analyzePlace);
+}
 
-placeInput.addEventListener("keydown", (event) => {
-  if (event.key === "Enter") {
-    analyzePlace();
-  }
+if (exportBtn) {
+  exportBtn.addEventListener("click", exportCsv);
+}
+
+if (placeInput) {
+  placeInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      analyzePlace();
+    }
+  });
+}
+
+window.addEventListener("load", () => {
+  setTimeout(() => {
+    map.invalidateSize();
+  }, 300);
 });
 
 window.addEventListener("resize", () => {
