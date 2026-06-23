@@ -397,3 +397,8 @@ if (mobileSidebarToggle) {
     }, 250);
   });
 }
+window.addEventListener("load", () => {
+  setTimeout(() => {
+    map.invalidateSize();
+  }, 300);
+});
