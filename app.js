@@ -380,3 +380,20 @@ document.querySelectorAll(".cached-city-btn").forEach((button) => {
     analyzePlace();
   });
 });
+const mobileSidebarToggle = document.getElementById("mobile-sidebar-toggle");
+
+if (mobileSidebarToggle) {
+  mobileSidebarToggle.addEventListener("click", () => {
+    document.body.classList.toggle("sidebar-open");
+
+    if (document.body.classList.contains("sidebar-open")) {
+      mobileSidebarToggle.textContent = "Hide filters / results";
+    } else {
+      mobileSidebarToggle.textContent = "Filters / Results";
+    }
+
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 250);
+  });
+}
