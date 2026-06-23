@@ -645,3 +645,54 @@ h2 {
     display: none;
   }
 }
+/* Mobile Leaflet map fix */
+@media (max-width: 980px) {
+  html,
+  body {
+    min-height: 100%;
+    overflow-x: hidden;
+  }
+
+  .app-shell {
+    display: flex !important;
+    flex-direction: column !important;
+    height: auto !important;
+    min-height: 100vh !important;
+    overflow: visible !important;
+  }
+
+  .sidebar {
+    width: 100% !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .map-panel {
+    width: 100% !important;
+    height: 65vh !important;
+    min-height: 430px !important;
+    display: block !important;
+    position: relative !important;
+  }
+
+  #map,
+  .leaflet-container {
+    width: 100% !important;
+    height: 65vh !important;
+    min-height: 430px !important;
+    display: block !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .map-panel {
+    height: 62vh !important;
+    min-height: 380px !important;
+  }
+
+  #map,
+  .leaflet-container {
+    height: 62vh !important;
+    min-height: 380px !important;
+  }
+}

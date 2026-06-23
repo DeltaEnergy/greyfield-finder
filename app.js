@@ -2,6 +2,10 @@ const API_BASE = "https://greyfield-finder-api.onrender.com";
 
 const map = L.map("map").setView([43.1306, -80.7460], 13);
 
+setTimeout(() => {
+  map.invalidateSize();
+}, 300);
+
 const basemaps = {
   dark: {
     name: "Dark dashboard",
@@ -299,11 +303,19 @@ async function analyzePlace() {
       }
     }).addTo(map);
 
-    if (geojson.features.length > 0) {
-      map.fitBounds(parkingLayer.getBounds(), { padding: [20, 20] });
-    }
+if (geojson.features.length > 0) {
+  map.fitBounds(parkingLayer.getBounds(), { padding: [20, 20] });
+}
 
-    renderResultsList(geojson.features);
+setTimeout(() => {
+  map.invalidateSize();
+
+  if (parkingLayer && geojson.features.length > 0) {
+    map.fitBounds(parkingLayer.getBounds(), { padding: [20, 20] });
+  }
+}, 300);
+
+renderResultsList(geojson.features);
 
     statusEl.textContent = `Found ${data.count} candidate parking lots in ${data.place}.`;
     exportBtn.disabled = false;
@@ -346,6 +358,13 @@ placeInput.addEventListener("keydown", (event) => {
     analyzePlace();
   }
 });
+
+window.addEventListener("resize", () => {
+  setTimeout(() => {
+    map.invalidateSize();
+  }, 150);
+});
+
 document.querySelectorAll(".cached-city-btn").forEach((button) => {
   button.addEventListener("click", () => {
     const place = button.dataset.place;
