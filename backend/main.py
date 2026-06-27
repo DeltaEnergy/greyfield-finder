@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import json
 from pathlib import Path
 from math import radians, sin, cos, sqrt, atan2
+from functools import lru_cache
 
 import geopandas as gpd
 import osmnx as ox
@@ -171,6 +172,14 @@ def nearest_distance_to_points(lat, lon, points_gdf):
 
     return min(distances)
 
+def access_category(score):
+    if score >= 80:
+        return "Very High Access"
+    if score >= 65:
+        return "High Access"
+    if score >= 50:
+        return "Moderate Access"
+    return "Low Access"
 
 def empty_gdf():
     return gpd.GeoDataFrame(geometry=[], crs="EPSG:4326")
@@ -186,6 +195,75 @@ def fetch_osm_features(place, tags):
     except Exception:
         return empty_gdf()
 
+@lru_cache(maxsize=12)
+def get_context_features(place):
+    """
+    Loads and caches amenity/transit/commercial context for a place.
+    First request may be slow because it queries OSM.
+    Later pin scores for the same place are fast.
+    """
+    transit_tags = {
+        "highway": "bus_stop",
+        "public_transport": "platform",
+        "railway": "station",
+    }
+
+    amenity_tags = {
+        "amenity": ["school", "pharmacy", "library", "clinic", "hospital", "doctors", "dentist", "community_centre", "townhall", "playground"],
+        "shop": ["supermarket", "convenience", "grocery"],
+        "leisure": ["park", "recreation_ground"],
+    }
+
+    commercial_tags = {
+        "landuse": ["commercial", "retail"],
+        "shop": True,
+    }
+
+    transit = fetch_osm_features(place, transit_tags)
+    amenities = fetch_osm_features(place, amenity_tags)
+    commercial = fetch_osm_features(place, commercial_tags)
+
+    if amenities.empty:
+        grocery = empty_gdf()
+        health = empty_gdf()
+        civic = empty_gdf()
+        parks = empty_gdf()
+    else:
+        if "shop" in amenities.columns:
+            grocery = amenities[
+                amenities["shop"].isin(["supermarket", "convenience", "grocery"])
+            ].copy()
+        else:
+            grocery = empty_gdf()
+
+        if "amenity" in amenities.columns:
+            health = amenities[
+                amenities["amenity"].isin(["pharmacy", "clinic", "hospital", "doctors", "dentist"])
+            ].copy()
+
+            civic = amenities[
+                amenities["amenity"].isin(["school", "library", "community_centre", "townhall"])
+            ].copy()
+        else:
+            health = empty_gdf()
+            civic = empty_gdf()
+
+        if "leisure" in amenities.columns:
+            parks = amenities[
+                amenities["leisure"].isin(["park", "recreation_ground"])
+            ].copy()
+        else:
+            parks = empty_gdf()
+
+        if "amenity" in amenities.columns:
+            playgrounds = amenities[
+                amenities["amenity"].isin(["playground"])
+            ].copy()
+
+            if not playgrounds.empty:
+                parks = pd.concat([parks, playgrounds], ignore_index=True)
+
+    return transit, amenities, commercial, grocery, health, civic, parks
 
 @app.get("/")
 def root():
@@ -250,58 +328,7 @@ def analyze_place(place: str = Query(..., description="Example: Woodstock, Ontar
         centre_lat = parking.geometry.centroid.y.mean()
         centre_lon = parking.geometry.centroid.x.mean()
 
-    transit_tags = {
-        "highway": "bus_stop",
-        "public_transport": "platform",
-        "railway": "station",
-    }
-
-    amenity_tags = {
-        "amenity": ["school", "pharmacy", "library", "clinic", "hospital"],
-        "shop": ["supermarket", "convenience"],
-        "leisure": ["park"],
-    }
-
-    commercial_tags = {
-        "landuse": ["commercial", "retail"],
-        "shop": True,
-    }
-
-    transit = fetch_osm_features(place, transit_tags)
-    amenities = fetch_osm_features(place, amenity_tags)
-    commercial = fetch_osm_features(place, commercial_tags)
-
-    if amenities.empty:
-        grocery = empty_gdf()
-        health = empty_gdf()
-        civic = empty_gdf()
-        parks = empty_gdf()
-    else:
-        if "shop" in amenities.columns:
-            grocery = amenities[
-                amenities["shop"].isin(["supermarket", "convenience", "grocery"])
-            ].copy()
-        else:
-            grocery = empty_gdf()
-
-        if "amenity" in amenities.columns:
-            health = amenities[
-                amenities["amenity"].isin(["pharmacy", "clinic", "hospital", "doctors", "dentist"])
-            ].copy()
-
-            civic = amenities[
-                amenities["amenity"].isin(["school", "library", "community_centre", "townhall"])
-            ].copy()
-        else:
-            health = empty_gdf()
-            civic = empty_gdf()
-
-        if "leisure" in amenities.columns:
-            parks = amenities[
-                amenities["leisure"].isin(["park", "recreation_ground"])
-            ].copy()
-        else:
-            parks = empty_gdf()
+    transit, amenities, commercial, grocery, health, civic, parks = get_context_features(place)
 
     results = []
 
@@ -395,4 +422,61 @@ def analyze_place(place: str = Query(..., description="Example: Woodstock, Ontar
         },
         "geojson": result_gdf.to_json(),
         "source": "live_osmnx",
+    }
+
+@app.get("/pin-score")
+def pin_score(
+    place: str = Query(..., description="Example: Woodstock, Ontario, Canada"),
+    lat: float = Query(...),
+    lon: float = Query(...),
+):
+    transit, amenities, commercial, grocery, health, civic, parks = get_context_features(place)
+
+    dist_grocery = nearest_distance_to_points(lat, lon, grocery)
+    dist_health = nearest_distance_to_points(lat, lon, health)
+    dist_civic = nearest_distance_to_points(lat, lon, civic)
+    dist_park = nearest_distance_to_points(lat, lon, parks)
+    dist_transit = nearest_distance_to_points(lat, lon, transit)
+    dist_commercial = nearest_distance_to_points(lat, lon, commercial)
+
+    grocery_score = points_for_walk_distance(dist_grocery, 20)
+    health_score = points_for_walk_distance(dist_health, 20)
+    civic_score = points_for_walk_distance(dist_civic, 15)
+    park_score = points_for_walk_distance(dist_park, 15)
+    transit_score = points_for_walk_distance(dist_transit, 20)
+    commercial_score = points_for_walk_distance(dist_commercial, 10)
+
+    amenity_access_score = round(
+        grocery_score
+        + health_score
+        + civic_score
+        + park_score
+        + transit_score
+        + commercial_score,
+        1,
+    )
+
+    return {
+        "error": False,
+        "place": place,
+        "lat": round(lat, 6),
+        "lon": round(lon, 6),
+        "amenity_access_score": amenity_access_score,
+        "access_category": access_category(amenity_access_score),
+        "distances": {
+            "grocery_m": round(dist_grocery, 1) if dist_grocery is not None else None,
+            "health_m": round(dist_health, 1) if dist_health is not None else None,
+            "civic_m": round(dist_civic, 1) if dist_civic is not None else None,
+            "park_m": round(dist_park, 1) if dist_park is not None else None,
+            "transit_m": round(dist_transit, 1) if dist_transit is not None else None,
+            "commercial_m": round(dist_commercial, 1) if dist_commercial is not None else None,
+        },
+        "scores": {
+            "grocery_score": grocery_score,
+            "health_score": health_score,
+            "civic_score": civic_score,
+            "park_score": park_score,
+            "transit_score": transit_score,
+            "commercial_score": commercial_score,
+        },
     }
