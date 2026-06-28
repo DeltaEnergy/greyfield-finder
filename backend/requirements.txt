@@ -4,4 +4,3 @@ osmnx
 geopandas
 shapely
 pandas
-python-3.11.9
