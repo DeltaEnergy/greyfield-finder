@@ -11,7 +11,6 @@ import osmnx as ox
 import pandas as pd
 
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import ORJSONResponse
 
 
 ox.settings.use_cache = True
@@ -51,7 +50,7 @@ CACHED_PLACES = {
     "stratford ontario canada": CACHE_DIR / "stratford.json",
 }
 
-app = FastAPI(default_response_class=ORJSONResponse)
+app = FastAPI(title="Greyfield Finder API")
 
 app.add_middleware(
     CORSMiddleware,
