@@ -341,6 +341,11 @@ function exportCsv() {
   const rows = [
     [
       "rank",
+      "lot_id",
+      "osm_type",
+      "osm_id",
+      "centroid_lat",
+      "centroid_lon",
       "name",
       "redevelopment_score",
       "amenity_access_score",
@@ -376,6 +381,11 @@ function exportCsv() {
 
     rows.push([
       index + 1,
+      p.lot_id,
+      p.osm_type,
+      p.osm_id,
+      p.centroid_lat,
+      p.centroid_lon,
       p.name || "Surface parking lot",
       p.redevelopment_score,
       p.amenity_access_score,

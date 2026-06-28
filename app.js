@@ -50,6 +50,10 @@ let parkingLayer = null;
 let featureLayers = [];
 let latestFeatures = [];
 
+let activeTool = "parking";
+let amenityPinMarker = null;
+let pinResults = [];
+
 const placeInput = document.getElementById("place-input");
 const analyzeBtn = document.getElementById("analyze-btn");
 const exportBtn = document.getElementById("export-btn");
@@ -57,6 +61,9 @@ const statusEl = document.getElementById("status");
 const resultsList = document.getElementById("results-list");
 const loadingOverlay = document.getElementById("loading-overlay");
 const mapStyleSelect = document.getElementById("map-style-select");
+const parkingModeBtn = document.getElementById("parkingModeBtn");
+const pinModeBtn = document.getElementById("pinModeBtn");
+
 
 let progressInterval;
 let currentProgress = 0;
@@ -142,7 +149,75 @@ loadingOverlay.classList.add("hidden");
 }, remainingTime + 500);
 }
 
+function setToolMode(mode) {
+  activeTool = mode;
 
+  parkingModeBtn.classList.toggle("active", mode === "parking");
+  pinModeBtn.classList.toggle("active", mode === "pin");
+
+  if (mode === "pin") {
+    statusEl.textContent = "Amenity pin mode active. Click anywhere on the map to score that location.";
+    map.getContainer().style.cursor = "crosshair";
+  } else {
+    statusEl.textContent = "Parking lot analysis mode active.";
+    map.getContainer().style.cursor = "";
+  }
+}
+
+async function scoreAmenityPin(lat, lon) {
+  const place = placeInput.value.trim();
+
+  if (!place) {
+    statusEl.textContent = "Enter a place before scoring a pin.";
+    return;
+  }
+
+  statusEl.textContent = "Scoring amenity access for pin...";
+
+  const url = `${API_BASE}/pin-score?place=${encodeURIComponent(place)}&lat=${lat}&lon=${lon}`;
+
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data.error) {
+      throw new Error(data.message || "Could not score this pin.");
+    }
+
+    pinResults.push(data);
+
+    const d = data.distances;
+
+    const popupHtml = `
+      <div class="popup-content">
+        <h3>Amenity Access Pin</h3>
+        <p><strong>Score:</strong> ${data.amenity_access_score}/100</p>
+        <p><strong>Category:</strong> ${data.access_category}</p>
+        <hr>
+        <p><strong>Grocery:</strong> ${formatDistance(d.grocery_m)}</p>
+        <p><strong>Health:</strong> ${formatDistance(d.health_m)}</p>
+        <p><strong>Civic:</strong> ${formatDistance(d.civic_m)}</p>
+        <p><strong>Park:</strong> ${formatDistance(d.park_m)}</p>
+        <p><strong>Transit:</strong> ${formatDistance(d.transit_m)}</p>
+        <p><strong>Commercial:</strong> ${formatDistance(d.commercial_m)}</p>
+        <hr>
+        <p><strong>Lat/Lon:</strong> ${data.lat}, ${data.lon}</p>
+      </div>
+    `;
+
+    if (amenityPinMarker) {
+      map.removeLayer(amenityPinMarker);
+    }
+
+    amenityPinMarker = L.marker([lat, lon]).addTo(map);
+    amenityPinMarker.bindPopup(popupHtml).openPopup();
+
+    statusEl.textContent = `Amenity pin scored: ${data.amenity_access_score}/100 (${data.access_category}).`;
+  } catch (error) {
+    console.error(error);
+    statusEl.textContent = `Pin scoring failed: ${error.message}`;
+  }
+}
 
 function getScoreClass(score) {
   if (score >= 75) return "High";
@@ -266,6 +341,11 @@ function exportCsv() {
   const rows = [
     [
       "rank",
+      "lot_id",
+      "osm_type",
+      "osm_id",
+      "centroid_lat",
+      "centroid_lon",
       "name",
       "redevelopment_score",
       "amenity_access_score",
@@ -301,6 +381,11 @@ function exportCsv() {
 
     rows.push([
       index + 1,
+      p.lot_id,
+      p.osm_type,
+      p.osm_id,
+      p.centroid_lat,
+      p.centroid_lon,
       p.name || "Surface parking lot",
       p.redevelopment_score,
       p.amenity_access_score,
@@ -485,6 +570,23 @@ document.querySelectorAll(".cached-city-btn").forEach((button) => {
 
     analyzePlace();
   });
+});
+
+if (parkingModeBtn && pinModeBtn) {
+  parkingModeBtn.addEventListener("click", () => {
+    setToolMode("parking");
+  });
+
+  pinModeBtn.addEventListener("click", () => {
+    setToolMode("pin");
+  });
+}
+
+map.on("click", (event) => {
+  if (activeTool !== "pin") return;
+
+  const { lat, lng } = event.latlng;
+  scoreAmenityPin(lat, lng);
 });
 
 const mobileSidebarToggle = document.getElementById("mobile-sidebar-toggle");
