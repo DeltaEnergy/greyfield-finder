@@ -171,6 +171,23 @@ function setToolMode(mode) {
   }
 }
 
+function scoreBar(label, value, max) {
+  const safeValue = Number(value ?? 0);
+  const width = Math.max(0, Math.min(100, (safeValue / max) * 100));
+
+  return `
+    <div class="score-bar-row">
+      <div class="score-bar-label">
+        <span>${label}</span>
+        <span>${safeValue}/${max}</span>
+      </div>
+      <div class="score-bar-track">
+        <div class="score-bar-fill" style="width:${width}%"></div>
+      </div>
+    </div>
+  `;
+}
+
 async function scoreAmenityPin(lat, lon) {
   const place = placeInput.value.trim();
 
@@ -194,23 +211,6 @@ async function scoreAmenityPin(lat, lon) {
     pinResults.push(data);
 
     const d = data.distances;
-
-function scoreBar(label, value, max) {
-  const safeValue = Number(value ?? 0);
-  const width = Math.max(0, Math.min(100, (safeValue / max) * 100));
-
-  return `
-    <div class="score-bar-row">
-      <div class="score-bar-label">
-        <span>${label}</span>
-        <span>${safeValue}/${max}</span>
-      </div>
-      <div class="score-bar-track">
-        <div class="score-bar-fill" style="width:${width}%"></div>
-      </div>
-    </div>
-  `;
-}
 
     const popupHtml = `
       <div class="popup-content">
@@ -538,7 +538,7 @@ async function analyzePlace() {
         animationDelay += 8;
       }
     });
-    
+
     if (geojson.features.length > 0) {
       map.fitBounds(parkingLayer.getBounds(), { padding: [20, 20] });
     }
