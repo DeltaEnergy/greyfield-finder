@@ -529,6 +529,16 @@ async function analyzePlace() {
     }
     }).addTo(map);
 
+        let animationDelay = 0;
+
+    parkingLayer.eachLayer((layer) => {
+      if (layer._path) {
+        layer._path.style.animationDelay = `${animationDelay}ms`;
+        layer._path.classList.add("parking-lot-animate");
+        animationDelay += 8;
+      }
+    });
+    
     if (geojson.features.length > 0) {
       map.fitBounds(parkingLayer.getBounds(), { padding: [20, 20] });
     }
