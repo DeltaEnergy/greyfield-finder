@@ -525,7 +525,7 @@ def pin_score(
         "lon": round(lon, 6),
         "amenity_access_score": amenity_access_score,
         "access_category": access_category(amenity_access_score),
-        "priority_category": priority_category(redevelopment_score),
+        "priority_category": priority_category(amenity_access_score),
         "distances": {
             "grocery_m": round(dist_grocery, 1) if dist_grocery is not None else None,
             "health_m": round(dist_health, 1) if dist_health is not None else None,
