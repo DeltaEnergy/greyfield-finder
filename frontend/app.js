@@ -64,6 +64,13 @@ const mapStyleSelect = document.getElementById("map-style-select");
 const parkingModeBtn = document.getElementById("parkingModeBtn");
 const pinModeBtn = document.getElementById("pinModeBtn");
 
+const amenityPinIcon = L.divIcon({
+  className: "amenity-pin-icon",
+  html: `<div class="amenity-pin-dot"></div>`,
+  iconSize: [26, 26],
+  iconAnchor: [13, 13],
+  popupAnchor: [0, -12]
+});
 
 let progressInterval;
 let currentProgress = 0;
@@ -188,6 +195,23 @@ async function scoreAmenityPin(lat, lon) {
 
     const d = data.distances;
 
+function scoreBar(label, value, max) {
+  const safeValue = Number(value ?? 0);
+  const width = Math.max(0, Math.min(100, (safeValue / max) * 100));
+
+  return `
+    <div class="score-bar-row">
+      <div class="score-bar-label">
+        <span>${label}</span>
+        <span>${safeValue}/${max}</span>
+      </div>
+      <div class="score-bar-track">
+        <div class="score-bar-fill" style="width:${width}%"></div>
+      </div>
+    </div>
+  `;
+}
+
     const popupHtml = `
       <div class="popup-content">
         <h3>Amenity Access Pin</h3>
@@ -209,7 +233,7 @@ async function scoreAmenityPin(lat, lon) {
       map.removeLayer(amenityPinMarker);
     }
 
-    amenityPinMarker = L.marker([lat, lon]).addTo(map);
+    amenityPinMarker = L.marker([lat, lon], { icon: amenityPinIcon }).addTo(map);
     amenityPinMarker.bindPopup(popupHtml).openPopup();
 
     statusEl.textContent = `Amenity pin scored: ${data.amenity_access_score}/100 (${data.access_category}).`;
@@ -258,9 +282,10 @@ function popupHtml(props) {
     <strong>${props.name || "Surface parking lot"}</strong><br />
     <hr />
 
+    <strong>Priority:</strong> ${props.priority_category || getScoreClass(props.redevelopment_score)}<br />
     <strong>Redevelopment Score:</strong> ${props.redevelopment_score}/100<br />
     <strong>Amenity Access Score:</strong> ${props.amenity_access_score ?? "N/A"}/100<br />
-    <strong>Interpretation:</strong> ${getScoreClass(props.redevelopment_score)} redevelopment potential<br /><br />
+    <strong>Interpretation:</strong> ${props.priority_category || getScoreClass(props.redevelopment_score)} redevelopment potential<br /><br />
 
     <strong>Area:</strong> ${Math.round(props.area_m2).toLocaleString()} m²<br />
     <strong>Distance to centre:</strong> ${formatDistance(props.distance_to_centre_m)}<br />
@@ -271,20 +296,21 @@ function popupHtml(props) {
     <strong>Nearest park:</strong> ${formatDistance(props.distance_to_park_m)}<br />
     <strong>Commercial context:</strong> ${formatDistance(props.distance_to_commercial_m)}<br /><br />
 
-    <strong>Redevelopment score breakdown</strong><br />
-    Area: ${props.area_score}/30<br />
-    Centre: ${props.centre_score}/20<br />
-    Transit: ${props.transit_score}/20<br />
-    Amenity: ${props.amenity_score}/20<br />
-    Commercial context: ${props.commercial_score}/10<br /><br />
+<strong>Redevelopment score breakdown</strong>
+${scoreBar("Area", props.area_score, 30)}
+${scoreBar("Centre", props.centre_score, 20)}
+${scoreBar("Transit", props.transit_score, 20)}
+${scoreBar("Amenity", props.amenity_score, 20)}
+${scoreBar("Commercial", props.commercial_score, 10)}
 
-    <strong>Amenity access breakdown</strong><br />
-    Grocery: ${props.grocery_score ?? "N/A"}/20<br />
-    Health: ${props.health_score ?? "N/A"}/20<br />
-    Civic: ${props.civic_score ?? "N/A"}/15<br />
-    Park: ${props.park_score ?? "N/A"}/15<br />
-    Transit: ${props.walk_transit_score ?? "N/A"}/20<br />
-    Commercial: ${props.walk_commercial_score ?? "N/A"}/10
+<br />
+<strong>Amenity access breakdown</strong>
+${scoreBar("Grocery", props.grocery_score, 20)}
+${scoreBar("Health", props.health_score, 20)}
+${scoreBar("Civic", props.civic_score, 15)}
+${scoreBar("Park", props.park_score, 15)}
+${scoreBar("Transit", props.walk_transit_score, 20)}
+${scoreBar("Commercial", props.walk_commercial_score, 10)}
   `;
 }
 
@@ -306,7 +332,7 @@ function renderResultsList(features) {
     card.innerHTML = `
       <div class="result-top-row">
         <div class="score">#${index + 1} — ${score}/100</div>
-        <span class="score-pill" style="background:${getScoreColor(score)}">${scoreClass}</span>
+        <span class="score-pill" style="background:${getScoreColor(score)}">${props.priority_category || scoreClass}</span>
       </div>
 
       <div><strong>${props.name || "Surface parking lot"}</strong></div>
@@ -368,7 +394,8 @@ function exportCsv() {
       "civic_score",
       "park_score",
       "walk_transit_score",
-      "walk_commercial_score"
+      "walk_commercial_score",
+      "nearest_street",
     ]
   ];
 
@@ -408,7 +435,8 @@ function exportCsv() {
       p.civic_score,
       p.park_score,
       p.walk_transit_score,
-      p.walk_commercial_score
+      p.walk_commercial_score,
+      p.nearest_street,
     ]);
   });
 
@@ -473,9 +501,32 @@ async function analyzePlace() {
     parkingLayer = L.geoJSON(geojson, {
       style: styleFeature,
       onEachFeature: (feature, layer) => {
-        layer.bindPopup(popupHtml(feature.properties));
-        featureLayers.push(layer);
-      }
+      layer.bindPopup(popupHtml(feature.properties));
+      featureLayers.push(layer);
+
+      layer.on("mouseover", () => {
+        const score = feature.properties.redevelopment_score || 0;
+
+        layer.setStyle({
+          weight: 4,
+          fillOpacity: 0.85
+        });
+
+        layer.bindTooltip(
+          `${feature.properties.priority_category || getScoreClass(score)} — ${score}/100`,
+          {
+            sticky: true,
+            direction: "top",
+            opacity: 0.95
+          }
+        ).openTooltip();
+      });
+
+      layer.on("mouseout", () => {
+        parkingLayer.resetStyle(layer);
+        layer.closeTooltip();
+      });
+    }
     }).addTo(map);
 
     if (geojson.features.length > 0) {
