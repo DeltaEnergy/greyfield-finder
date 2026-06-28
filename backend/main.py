@@ -277,12 +277,6 @@ def get_context_features(place):
 def root():
     return {"message": "Greyfield Finder API is running."}
 
-road_tags = {"highway": True}
-roads = fetch_osm_features(place, road_tags)
-
-if not roads.empty:
-    roads = roads[roads.geometry.type.isin(["LineString", "MultiLineString"])].copy()
-
 def nearest_named_feature(lat, lon, features_gdf, name_col="name"):
     if features_gdf is None or features_gdf.empty or name_col not in features_gdf.columns:
         return None
@@ -369,15 +363,26 @@ def analyze_place(place: str = Query(..., description="Example: Woodstock, Ontar
         centre_lon = parking.geometry.centroid.x.mean()
 
     transit, amenities, commercial, grocery, health, civic, parks = get_context_features(place)
-    nearest_street = nearest_named_feature(lat, lon, roads)
+    
+    road_tags = {"highway": True}
+    roads = fetch_osm_features(place, road_tags)
+
+    if not roads.empty:
+        roads = roads[roads.geometry.type.isin(["LineString", "MultiLineString"])].copy()
+
     results = []
 
     for idx, row in parking.iterrows():
         geom = row.geometry
         lat, lon = get_centroid_latlon(geom)
         area_m2 = float(row["area_m2"])
+
+        nearest_street = nearest_named_feature(lat, lon, roads)
+
         osm_type = None
         osm_id = None
+
+        
 
         if isinstance(idx, tuple) and len(idx) >= 2:
             osm_type = str(idx[0])
