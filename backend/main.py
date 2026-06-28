@@ -180,6 +180,15 @@ def access_category(score):
         return "Moderate Access"
     return "Low Access"
 
+def priority_category(score):
+    if score >= 80:
+        return "Very High"
+    if score >= 65:
+        return "High"
+    if score >= 50:
+        return "Moderate"
+    return "Low"
+
 def empty_gdf():
     return gpd.GeoDataFrame(geometry=[], crs="EPSG:4326")
 
@@ -268,6 +277,38 @@ def get_context_features(place):
 def root():
     return {"message": "Greyfield Finder API is running."}
 
+road_tags = {"highway": True}
+roads = fetch_osm_features(place, road_tags)
+
+if not roads.empty:
+    roads = roads[roads.geometry.type.isin(["LineString", "MultiLineString"])].copy()
+
+def nearest_named_feature(lat, lon, features_gdf, name_col="name"):
+    if features_gdf is None or features_gdf.empty or name_col not in features_gdf.columns:
+        return None
+
+    best_name = None
+    best_dist = None
+
+    for _, feature in features_gdf.iterrows():
+        name = feature.get(name_col, None)
+
+        if pd.isna(name) or name is None:
+            continue
+
+        geom = feature.geometry
+
+        if geom is None or geom.is_empty:
+            continue
+
+        p = geom.centroid
+        dist = haversine_m(lat, lon, p.y, p.x)
+
+        if best_dist is None or dist < best_dist:
+            best_dist = dist
+            best_name = str(name)
+
+    return best_name
 
 @app.get("/analyze")
 def analyze_place(place: str = Query(..., description="Example: Woodstock, Ontario, Canada")):
@@ -328,7 +369,7 @@ def analyze_place(place: str = Query(..., description="Example: Woodstock, Ontar
         centre_lon = parking.geometry.centroid.x.mean()
 
     transit, amenities, commercial, grocery, health, civic, parks = get_context_features(place)
-
+    nearest_street = nearest_named_feature(lat, lon, roads)
     results = []
 
     for idx, row in parking.iterrows():
@@ -413,6 +454,7 @@ def analyze_place(place: str = Query(..., description="Example: Woodstock, Ontar
                 "amenity_score": amenity_score,
                 "commercial_score": commercial_score,
                 "redevelopment_score": redevelopment_score,
+                "priority_category": priority_category(redevelopment_score),
                 "amenity_access_score": amenity_access_score,
                 "grocery_score": grocery_score,
                 "health_score": health_score,
@@ -420,6 +462,7 @@ def analyze_place(place: str = Query(..., description="Example: Woodstock, Ontar
                 "park_score": park_score,
                 "walk_transit_score": walk_transit_score,
                 "walk_commercial_score": walk_commercial_score,
+                "nearest_street": nearest_street,
             }
         )
 
@@ -477,6 +520,7 @@ def pin_score(
         "lon": round(lon, 6),
         "amenity_access_score": amenity_access_score,
         "access_category": access_category(amenity_access_score),
+        "priority_category": priority_category(redevelopment_score),
         "distances": {
             "grocery_m": round(dist_grocery, 1) if dist_grocery is not None else None,
             "health_m": round(dist_health, 1) if dist_health is not None else None,

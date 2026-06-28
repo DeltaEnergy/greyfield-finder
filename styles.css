@@ -1021,3 +1021,35 @@ h2 {
   color: var(--text);
   border-color: rgba(125, 211, 252, 0.35);
 }
+.score-bar-row {
+  margin: 7px 0;
+}
+
+.score-bar-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.78rem;
+  margin-bottom: 3px;
+}
+
+.score-bar-track {
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.score-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: rgba(125, 211, 252, 0.85);
+}
+.amenity-pin-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: #8b5cf6;
+  border: 3px solid #ffffff;
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.25), 0 8px 18px rgba(0, 0, 0, 0.35);
+}
