@@ -4,4 +4,4 @@ osmnx
 geopandas
 shapely
 pandas
-scikit-learnorjson
+python-3.11.9
