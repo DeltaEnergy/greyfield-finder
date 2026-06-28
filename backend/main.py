@@ -331,10 +331,20 @@ def analyze_place(place: str = Query(..., description="Example: Woodstock, Ontar
 
     results = []
 
-    for _, row in parking.iterrows():
+    for idx, row in parking.iterrows():
         geom = row.geometry
         lat, lon = get_centroid_latlon(geom)
         area_m2 = float(row["area_m2"])
+        osm_type = None
+        osm_id = None
+
+        if isinstance(idx, tuple) and len(idx) >= 2:
+            osm_type = str(idx[0])
+            osm_id = str(idx[1])
+        else:
+            osm_id = str(idx)
+
+        lot_id = f"{osm_type or 'osm'}-{osm_id}"
 
         dist_centre = haversine_m(lat, lon, centre_lat, centre_lon)
         dist_transit = nearest_distance_to_points(lat, lon, transit)
@@ -392,6 +402,11 @@ def analyze_place(place: str = Query(..., description="Example: Woodstock, Ontar
                 "distance_to_health_m": round(dist_health, 1) if dist_health is not None else None,
                 "distance_to_civic_m": round(dist_civic, 1) if dist_civic is not None else None,
                 "distance_to_park_m": round(dist_park, 1) if dist_park is not None else None,
+                "lot_id": lot_id,
+                "osm_type": osm_type,
+                "osm_id": osm_id,
+                "centroid_lat": round(lat, 6),
+                "centroid_lon": round(lon, 6),
                 "area_score": area_score,
                 "centre_score": centre_score,
                 "transit_score": transit_score,
