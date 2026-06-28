@@ -459,7 +459,7 @@ def analyze_place(place: str = Query(..., description="Example: Woodstock, Ontar
                 "amenity_score": amenity_score,
                 "commercial_score": commercial_score,
                 "redevelopment_score": redevelopment_score,
-                "priority_category": priority_category(redevelopment_score),
+                "priority_category": priority_category(amenity_access_score),
                 "amenity_access_score": amenity_access_score,
                 "grocery_score": grocery_score,
                 "health_score": health_score,
