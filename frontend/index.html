@@ -22,23 +22,22 @@
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
   />
+  <link rel="icon" href="./favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png">
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png">
+  <link rel="manifest" href="./site.webmanifest">
+
+  <meta property="og:title" content="Greyfield Finder">
+  <meta property="og:description" content="A planning GIS tool for identifying surface parking lots with infill and greyfield redevelopment potential.">
+  <meta property="og:image" content="https://samwells.ca/greyfield-finder/og-image.png">
+  <meta property="og:url" content="https://samwells.ca/greyfield-finder/">
+  <meta property="og:type" content="website">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Greyfield Finder">
+  <meta name="twitter:description" content="A planning GIS tool for identifying surface parking lots with infill and greyfield redevelopment potential.">
+  <meta name="twitter:image" content="https://samwells.ca/greyfield-finder/og-image.png">
 </head>
-
-<link rel="icon" href="./favicon.ico" sizes="any">
-<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png">
-<link rel="apple-touch-icon" href="./apple-touch-icon.png">
-<link rel="manifest" href="./site.webmanifest">
-
-<meta property="og:title" content="Greyfield Finder">
-<meta property="og:description" content="A planning GIS tool for identifying surface parking lots with infill and greyfield redevelopment potential.">
-<meta property="og:image" content="https://samwells.ca/greyfield-finder/og-image.png">
-<meta property="og:url" content="https://samwells.ca/greyfield-finder/">
-<meta property="og:type" content="website">
-
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Greyfield Finder">
-<meta name="twitter:description" content="A planning GIS tool for identifying surface parking lots with infill and greyfield redevelopment potential.">
-<meta name="twitter:image" content="https://samwells.ca/greyfield-finder/og-image.png">
 <body>
 <button class="mobile-sidebar-toggle" id="mobile-sidebar-toggle" aria-label="Open search and results panel">
   <span class="mobile-toggle-icon">⌕</span>
@@ -121,6 +120,45 @@
       </div>
 
       <p id="status" class="status">Ready.</p>
+      <div id="source-badge" class="source-badge hidden"></div>
+
+      <div class="filter-panel">
+        <div class="filter-header">
+          <span>Filters</span>
+          <small>screening view</small>
+        </div>
+
+        <label class="filter-control" for="min-score">
+          <span>Minimum redevelopment score</span>
+          <strong id="min-score-value">0+</strong>
+        </label>
+        <input id="min-score" class="range-input" type="range" min="0" max="100" value="0" step="5" />
+
+        <label class="filter-control" for="min-area">
+          <span>Minimum lot area</span>
+        </label>
+        <input id="min-area" class="filter-number" type="number" min="0" step="500" value="0" placeholder="0 m²" />
+
+        <label class="checkbox-row" for="high-only">
+          <input id="high-only" type="checkbox" />
+          <span>Only high / very high priority</span>
+        </label>
+
+        <div class="filter-actions">
+          <button id="show-top-btn" type="button">Show top 10</button>
+          <button id="reset-filters-btn" type="button">Reset</button>
+        </div>
+
+        <label class="filter-control" for="export-mode">
+          <span>CSV export</span>
+        </label>
+        <select id="export-mode" class="map-style-select compact-select">
+          <option value="filtered">Filtered results</option>
+          <option value="all">All lots</option>
+          <option value="top20">Top 20</option>
+          <option value="visible">Visible map area</option>
+        </select>
+      </div>
 
       <div class="legend">
         <div class="legend-item">
@@ -212,6 +250,9 @@
     </section>
 
     <section class="map-panel">
+      <div id="pin-hint" class="pin-hint hidden">
+        Amenity pin mode active — click anywhere on the map to score local access.
+      </div>
       <div id="map"></div>
     </section>
   </main>

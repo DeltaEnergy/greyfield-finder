@@ -1471,3 +1471,230 @@ h2 {
 .score-bar-track {
   height: 6px !important;
 }
+
+/* =========================================================
+   FEATURE UPDATE: filters, source badge, map actions
+   ========================================================= */
+
+.hidden {
+  display: none !important;
+}
+
+.source-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin: -6px 0 16px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  border: 1px solid rgba(125, 211, 252, 0.22);
+  color: #dff6ff;
+  background: rgba(125, 211, 252, 0.1);
+}
+
+.source-badge.cached {
+  border-color: rgba(34, 197, 94, 0.35);
+  color: #d1fae5;
+  background: rgba(34, 197, 94, 0.12);
+}
+
+.source-badge.live {
+  border-color: rgba(167, 139, 250, 0.35);
+  color: #ede9fe;
+  background: rgba(167, 139, 250, 0.12);
+}
+
+.filter-panel {
+  margin: 0 0 16px;
+  padding: 13px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid var(--border);
+}
+
+.filter-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.filter-header span {
+  color: var(--text);
+  font-size: 0.92rem;
+  font-weight: 950;
+}
+
+.filter-header small {
+  padding: 4px 8px;
+  border-radius: 999px;
+  color: #dff6ff;
+  background: rgba(125, 211, 252, 0.12);
+  border: 1px solid rgba(125, 211, 252, 0.22);
+  font-size: 0.7rem;
+  font-weight: 850;
+}
+
+.filter-control {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin: 10px 0 7px;
+  color: var(--muted-strong);
+  font-size: 0.8rem;
+  font-weight: 850;
+}
+
+.filter-control strong {
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.range-input {
+  width: 100%;
+  accent-color: #7dd3fc;
+}
+
+.filter-number {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(5, 8, 14, 0.72);
+  color: var(--text);
+  font-weight: 750;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0;
+  color: var(--muted-strong);
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.checkbox-row input {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  accent-color: #7dd3fc;
+}
+
+.filter-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 10px 0 12px;
+}
+
+.filter-actions button {
+  padding: 10px 12px;
+  border-radius: 12px;
+  box-shadow: none;
+  font-size: 0.78rem;
+}
+
+.filter-actions button:first-child {
+  background: linear-gradient(135deg, rgba(125, 211, 252, 0.95), rgba(167, 139, 250, 0.92));
+  color: #07111f;
+}
+
+.filter-actions button:last-child {
+  background: rgba(255, 255, 255, 0.075);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.compact-select {
+  padding: 10px 12px !important;
+  font-size: 0.84rem !important;
+}
+
+.pin-hint {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  z-index: 500;
+  transform: translateX(-50%);
+  max-width: min(460px, calc(100vw - 460px));
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid rgba(167, 139, 250, 0.35);
+  color: #f8fafc;
+  font-size: 0.84rem;
+  font-weight: 850;
+  text-align: center;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(12px);
+  pointer-events: none;
+}
+
+.gf-insight {
+  color: #475569 !important;
+  background: #f8fafc !important;
+  font-size: 0.82rem !important;
+  line-height: 1.42 !important;
+  font-weight: 700 !important;
+}
+
+.gf-popup-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 10px 15px 12px;
+  background: #f8fafc;
+  border-top: 1px solid #e5e7eb;
+}
+
+.gf-popup-actions a,
+.gf-popup-actions button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 34px;
+  padding: 8px 9px;
+  border: 0;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #4338ca;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-decoration: none;
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.gf-popup-actions button {
+  font-family: inherit;
+}
+
+.gf-popup-actions a:hover,
+.gf-popup-actions button:hover {
+  transform: none;
+  background: #e0e7ff;
+  box-shadow: none;
+}
+
+@media (max-width: 980px) {
+  .pin-hint {
+    top: 16px;
+    left: 16px;
+    right: 16px;
+    transform: none;
+    max-width: none;
+    border-radius: 16px;
+  }
+
+  .filter-actions {
+    grid-template-columns: 1fr;
+  }
+}

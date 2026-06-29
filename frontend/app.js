@@ -49,14 +49,18 @@ let currentBaseLayer = L.tileLayer(
 let parkingLayer = null;
 let featureLayers = [];
 let latestFeatures = [];
+let displayedFeatures = [];
 
 let activeTool = "parking";
-let amenityPinMarker = null;
+let amenityPinMarkers = [];
 let pinResults = [];
 
 let progressInterval;
 let currentProgress = 0;
 let progressStartTime = 0;
+let currentSource = null;
+let currentPlace = "";
+let activeTopTen = false;
 
 const placeInput = document.getElementById("place-input");
 const analyzeBtn = document.getElementById("analyze-btn");
@@ -70,6 +74,17 @@ const pinModeBtn = document.getElementById("pinModeBtn");
 const mobileSidebarToggle = document.getElementById("mobile-sidebar-toggle");
 const mobileToggleText = document.querySelector(".mobile-toggle-text");
 const mobileToggleIcon = document.querySelector(".mobile-toggle-icon");
+
+const sourceBadge = document.getElementById("source-badge");
+const pinHint = document.getElementById("pin-hint");
+
+const minScoreInput = document.getElementById("min-score");
+const minScoreValue = document.getElementById("min-score-value");
+const minAreaInput = document.getElementById("min-area");
+const highOnlyInput = document.getElementById("high-only");
+const showTopBtn = document.getElementById("show-top-btn");
+const resetFiltersBtn = document.getElementById("reset-filters-btn");
+const exportModeSelect = document.getElementById("export-mode");
 
 const amenityPinIcon = L.divIcon({
   className: "amenity-pin-icon",
@@ -215,6 +230,10 @@ function setToolMode(mode) {
     pinModeBtn.classList.toggle("active", mode === "pin");
   }
 
+  if (pinHint) {
+    pinHint.classList.toggle("hidden", mode !== "pin");
+  }
+
   if (mode === "pin") {
     statusEl.textContent = "Amenity pin mode active. Click anywhere on the map to score that location.";
     map.getContainer().style.cursor = "crosshair";
@@ -225,8 +244,9 @@ function setToolMode(mode) {
 }
 
 function getScoreClass(score) {
-  if (score >= 75) return "High";
-  if (score >= 50) return "Medium";
+  if (score >= 80) return "Very High";
+  if (score >= 65) return "High";
+  if (score >= 50) return "Moderate";
   return "Low";
 }
 
@@ -238,13 +258,15 @@ function getScoreColor(score) {
 
 function styleFeature(feature) {
   const score = feature.properties.redevelopment_score || 0;
+  const zoom = map.getZoom();
+  const zoomedOut = zoom < 13;
 
   return {
     color: "#ffffff",
     fillColor: getScoreColor(score),
-    weight: score >= 75 ? 3 : 2,
-    opacity: 1,
-    fillOpacity: score >= 75 ? 0.7 : 0.5
+    weight: zoomedOut ? 1.25 : score >= 75 ? 3 : 2,
+    opacity: zoomedOut ? 0.82 : 1,
+    fillOpacity: zoomedOut ? 0.35 : score >= 75 ? 0.7 : 0.5
   };
 }
 
@@ -275,8 +297,46 @@ function scoreBar(label, value, max) {
   `;
 }
 
+function buildSiteReason(props) {
+  const reasons = [];
+
+  if ((props.area_score ?? 0) >= 20) reasons.push("large lot scale");
+  if ((props.centre_score ?? 0) >= 14) reasons.push("town-centre proximity");
+  if ((props.transit_score ?? 0) >= 14 || (props.walk_transit_score ?? 0) >= 14) reasons.push("nearby transit");
+  if ((props.amenity_score ?? 0) >= 14 || (props.amenity_access_score ?? 0) >= 75) reasons.push("strong daily-needs access");
+  if ((props.commercial_score ?? 0) >= 7) reasons.push("commercial context");
+
+  if (!reasons.length) {
+    return "Lower-priority screening result. Review parcel details, zoning, ownership, servicing, and local constraints before considering redevelopment potential.";
+  }
+
+  const firstReasons = reasons.slice(0, 3).join(", ");
+  return `Strong candidate because of ${firstReasons}. Use this as a screening flag, not a final site-selection decision.`;
+}
+
+function googleMapsUrl(lat, lon) {
+  if (lat === null || lat === undefined || lon === null || lon === undefined) {
+    return null;
+  }
+
+  return `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
+}
+
+window.copyLotCoordinates = async function copyLotCoordinates(lat, lon) {
+  const text = `${lat}, ${lon}`;
+
+  try {
+    await navigator.clipboard.writeText(text);
+    statusEl.textContent = `Copied coordinates: ${text}`;
+  } catch (error) {
+    console.error(error);
+    statusEl.textContent = `Coordinates: ${text}`;
+  }
+};
+
 function popupHtml(props) {
   const priority = props.priority_category || getScoreClass(props.redevelopment_score);
+  const mapsUrl = googleMapsUrl(props.centroid_lat, props.centroid_lon);
 
   return `
     <div class="gf-popup">
@@ -286,6 +346,10 @@ function popupHtml(props) {
           <h3>${props.redevelopment_score}/100</h3>
         </div>
         <span class="gf-badge">${priority}</span>
+      </div>
+
+      <div class="gf-popup-section gf-insight">
+        ${buildSiteReason(props)}
       </div>
 
       <div class="gf-popup-section">
@@ -345,6 +409,19 @@ function popupHtml(props) {
         ${scoreBar("Transit", props.walk_transit_score, 20)}
         ${scoreBar("Commercial", props.walk_commercial_score, 10)}
       </div>
+
+      <div class="gf-popup-actions">
+        ${
+          mapsUrl
+            ? `<a href="${mapsUrl}" target="_blank" rel="noopener">Open in Google Maps</a>`
+            : ""
+        }
+        ${
+          props.centroid_lat && props.centroid_lon
+            ? `<button type="button" onclick="copyLotCoordinates(${props.centroid_lat}, ${props.centroid_lon})">Copy coordinates</button>`
+            : ""
+        }
+      </div>
     </div>
   `;
 }
@@ -377,6 +454,7 @@ async function scoreAmenityPin(lat, lon) {
     pinResults.push(data);
 
     const d = data.distances;
+    const mapsUrl = googleMapsUrl(data.lat, data.lon);
 
     const popupHtml = `
       <div class="gf-popup">
@@ -386,6 +464,10 @@ async function scoreAmenityPin(lat, lon) {
             <h3>${data.amenity_access_score}/100</h3>
           </div>
           <span class="gf-badge">${data.access_category}</span>
+        </div>
+
+        <div class="gf-popup-section gf-insight">
+          This pin estimates local daily-needs access from the clicked point using nearby grocery, health, civic, park, transit, and commercial features.
         </div>
 
         <div class="gf-popup-section">
@@ -415,18 +497,25 @@ async function scoreAmenityPin(lat, lon) {
           </div>
         </div>
 
+        <div class="gf-popup-actions">
+          <a href="${mapsUrl}" target="_blank" rel="noopener">Open in Google Maps</a>
+          <button type="button" onclick="copyLotCoordinates(${data.lat}, ${data.lon})">Copy coordinates</button>
+        </div>
+
         <div class="gf-popup-footer">
           ${data.lat}, ${data.lon}
         </div>
       </div>
     `;
 
-    if (amenityPinMarker) {
-      map.removeLayer(amenityPinMarker);
-    }
+    const marker = L.marker([lat, lon], { icon: amenityPinIcon }).addTo(map);
+    marker.bindPopup(popupHtml).openPopup();
+    amenityPinMarkers.push(marker);
 
-    amenityPinMarker = L.marker([lat, lon], { icon: amenityPinIcon }).addTo(map);
-    amenityPinMarker.bindPopup(popupHtml).openPopup();
+    if (amenityPinMarkers.length > 20) {
+      const oldestMarker = amenityPinMarkers.shift();
+      map.removeLayer(oldestMarker);
+    }
 
     statusEl.textContent = `Amenity pin scored: ${data.amenity_access_score}/100 (${data.access_category}).`;
   } catch (error) {
@@ -479,9 +568,204 @@ function renderResultsList(features) {
   });
 }
 
+function getFilterValues() {
+  return {
+    minScore: Number(minScoreInput?.value ?? 0),
+    minArea: Number(minAreaInput?.value ?? 0),
+    highOnly: Boolean(highOnlyInput?.checked)
+  };
+}
+
+function getFilteredFeatures() {
+  const filters = getFilterValues();
+
+  let features = [...latestFeatures];
+
+  features = features.filter((feature) => {
+    const props = feature.properties;
+    const score = Number(props.redevelopment_score ?? 0);
+    const area = Number(props.area_m2 ?? 0);
+
+    if (score < filters.minScore) return false;
+    if (area < filters.minArea) return false;
+    if (filters.highOnly && score < 65) return false;
+
+    return true;
+  });
+
+  features.sort((a, b) => {
+    return b.properties.redevelopment_score - a.properties.redevelopment_score;
+  });
+
+  if (activeTopTen) {
+    features = features.slice(0, 10);
+  }
+
+  return features;
+}
+
+function updateSourceBadge() {
+  if (!sourceBadge) return;
+
+  if (!currentSource) {
+    sourceBadge.classList.add("hidden");
+    return;
+  }
+
+  sourceBadge.classList.remove("hidden");
+
+  if (currentSource === "cached") {
+    sourceBadge.textContent = "Source: cached case study";
+    sourceBadge.classList.add("cached");
+    sourceBadge.classList.remove("live");
+  } else {
+    sourceBadge.textContent = "Source: live OpenStreetMap query";
+    sourceBadge.classList.add("live");
+    sourceBadge.classList.remove("cached");
+  }
+}
+
+function updateFilterLabels() {
+  if (minScoreInput && minScoreValue) {
+    minScoreValue.textContent = `${minScoreInput.value}+`;
+  }
+}
+
+function renderParkingFeatures(features, fitBounds = false) {
+  displayedFeatures = features;
+
+  if (parkingLayer) {
+    map.removeLayer(parkingLayer);
+    parkingLayer = null;
+  }
+
+  featureLayers = [];
+
+  const featureCollection = {
+    type: "FeatureCollection",
+    features
+  };
+
+  parkingLayer = L.geoJSON(featureCollection, {
+    interactive: true,
+    style: styleFeature,
+    onEachFeature: (feature, layer) => {
+      layer.bindPopup(popupHtml(feature.properties));
+      featureLayers.push(layer);
+
+      const score = feature.properties.redevelopment_score || 0;
+      const tooltipText = `${feature.properties.priority_category || getScoreClass(score)} — ${score}/100`;
+
+      layer.bindTooltip(tooltipText, {
+        sticky: true,
+        direction: "top",
+        opacity: 0.95,
+        className: "lot-tooltip"
+      });
+
+      layer.on("mouseover", () => {
+        layer.bringToFront();
+
+        layer.setStyle({
+          color: "#a855f7",
+          weight: 5,
+          opacity: 1,
+          fillOpacity: 0.9
+        });
+
+        const path = layer.getElement ? layer.getElement() : layer._path;
+
+        if (path) {
+          path.classList.add("parking-lot-hover");
+        }
+
+        layer.openTooltip();
+      });
+
+      layer.on("mousemove", () => {
+        layer.openTooltip();
+      });
+
+      layer.on("mouseout", () => {
+        const path = layer.getElement ? layer.getElement() : layer._path;
+
+        if (path) {
+          path.classList.remove("parking-lot-hover");
+        }
+
+        if (parkingLayer) {
+          parkingLayer.resetStyle(layer);
+        }
+
+        layer.closeTooltip();
+      });
+    }
+  }).addTo(map);
+
+  if (fitBounds && features.length > 0) {
+    map.fitBounds(parkingLayer.getBounds(), { padding: [20, 20] });
+  }
+
+  setTimeout(() => {
+    animateParkingLots();
+  }, 250);
+}
+
+function applyFilters(fitBounds = false) {
+  if (!latestFeatures.length) return;
+
+  updateFilterLabels();
+
+  const filtered = getFilteredFeatures();
+  renderParkingFeatures(filtered, fitBounds);
+  renderResultsList(filtered);
+
+  const topModeText = activeTopTen ? " top-ranked" : "";
+  const filterText = filtered.length === latestFeatures.length
+    ? ""
+    : ` (${filtered.length} shown after filters)`;
+
+  statusEl.textContent = `Found ${latestFeatures.length} candidate parking lots in ${currentPlace}.${topModeText}${filterText}`;
+  exportBtn.disabled = filtered.length === 0;
+}
+
+function getExportFeatures() {
+  const mode = exportModeSelect?.value || "filtered";
+
+  if (mode === "all") {
+    return [...latestFeatures];
+  }
+
+  if (mode === "top20") {
+    return [...latestFeatures]
+      .sort((a, b) => b.properties.redevelopment_score - a.properties.redevelopment_score)
+      .slice(0, 20);
+  }
+
+  if (mode === "visible") {
+    const bounds = map.getBounds();
+
+    return displayedFeatures.filter((feature) => {
+      const props = feature.properties;
+      const lat = props.centroid_lat;
+      const lon = props.centroid_lon;
+
+      if (lat === null || lat === undefined || lon === null || lon === undefined) {
+        return false;
+      }
+
+      return bounds.contains([lat, lon]);
+    });
+  }
+
+  return [...displayedFeatures];
+}
+
 function exportCsv() {
-  if (!latestFeatures.length) {
-    statusEl.textContent = "No results to export yet.";
+  const features = getExportFeatures();
+
+  if (!features.length) {
+    statusEl.textContent = "No matching results to export.";
     return;
   }
 
@@ -521,7 +805,7 @@ function exportCsv() {
     ]
   ];
 
-  const sorted = [...latestFeatures].sort((a, b) => {
+  const sorted = [...features].sort((a, b) => {
     return b.properties.redevelopment_score - a.properties.redevelopment_score;
   });
 
@@ -572,9 +856,10 @@ function exportCsv() {
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
 
+  const mode = exportModeSelect?.value || "filtered";
   const link = document.createElement("a");
   link.href = url;
-  link.download = "greyfield-finder-results.csv";
+  link.download = `greyfield-finder-${mode}-results.csv`;
   link.click();
 
   URL.revokeObjectURL(url);
@@ -619,6 +904,11 @@ async function analyzePlace() {
   statusEl.textContent = `Analyzing ${place}. This may take a moment...`;
   resultsList.innerHTML = "";
   latestFeatures = [];
+  displayedFeatures = [];
+  currentSource = null;
+  currentPlace = place;
+  activeTopTen = false;
+  updateSourceBadge();
 
   try {
     const url = `${API_BASE}/analyze?place=${encodeURIComponent(place)}`;
@@ -637,74 +927,16 @@ async function analyzePlace() {
 
     const geojson = JSON.parse(data.geojson);
     latestFeatures = geojson.features;
+    currentSource = data.source || "live_osmnx";
+    currentPlace = data.place || place;
 
-    if (parkingLayer) {
-      map.removeLayer(parkingLayer);
-    }
-
-    featureLayers = [];
-
-    parkingLayer = L.geoJSON(geojson, {
-      interactive: true,
-      style: styleFeature,
-      onEachFeature: (feature, layer) => {
-        layer.bindPopup(popupHtml(feature.properties));
-        featureLayers.push(layer);
-
-        const score = feature.properties.redevelopment_score || 0;
-        const tooltipText = `${feature.properties.priority_category || getScoreClass(score)} — ${score}/100`;
-
-        layer.bindTooltip(tooltipText, {
-          sticky: true,
-          direction: "top",
-          opacity: 0.95,
-          className: "lot-tooltip"
-        });
-
-        layer.on("mouseover", () => {
-          layer.bringToFront();
-
-          layer.setStyle({
-            color: "#a855f7",
-            weight: 5,
-            opacity: 1,
-            fillOpacity: 0.9
-          });
-
-          const path = layer.getElement ? layer.getElement() : layer._path;
-
-          if (path) {
-            path.classList.add("parking-lot-hover");
-          }
-
-          layer.openTooltip();
-        });
-
-        layer.on("mousemove", () => {
-          layer.openTooltip();
-        });
-
-        layer.on("mouseout", () => {
-          const path = layer.getElement ? layer.getElement() : layer._path;
-
-          if (path) {
-            path.classList.remove("parking-lot-hover");
-          }
-
-          parkingLayer.resetStyle(layer);
-          layer.closeTooltip();
-        });
-      }
-    }).addTo(map);
-
-    if (geojson.features.length > 0) {
-      map.fitBounds(parkingLayer.getBounds(), { padding: [20, 20] });
-    }
+    updateSourceBadge();
+    applyFilters(true);
 
     setTimeout(() => {
       map.invalidateSize();
 
-      if (parkingLayer && geojson.features.length > 0) {
+      if (parkingLayer && displayedFeatures.length > 0) {
         map.fitBounds(parkingLayer.getBounds(), { padding: [20, 20] });
       }
 
@@ -713,10 +945,7 @@ async function analyzePlace() {
       }, 600);
     }, 300);
 
-    renderResultsList(geojson.features);
-
-    statusEl.textContent = `Found ${data.count} candidate parking lots in ${data.place}.`;
-    exportBtn.disabled = false;
+    exportBtn.disabled = displayedFeatures.length === 0;
   } catch (error) {
     console.error("Analysis error:", error);
     statusEl.textContent = `Analysis failed: ${error.message}`;
@@ -767,6 +996,45 @@ if (placeInput) {
   });
 }
 
+if (minScoreInput) {
+  minScoreInput.addEventListener("input", () => {
+    activeTopTen = false;
+    applyFilters();
+  });
+}
+
+if (minAreaInput) {
+  minAreaInput.addEventListener("input", () => {
+    activeTopTen = false;
+    applyFilters();
+  });
+}
+
+if (highOnlyInput) {
+  highOnlyInput.addEventListener("change", () => {
+    activeTopTen = false;
+    applyFilters();
+  });
+}
+
+if (showTopBtn) {
+  showTopBtn.addEventListener("click", () => {
+    activeTopTen = true;
+    applyFilters(true);
+  });
+}
+
+if (resetFiltersBtn) {
+  resetFiltersBtn.addEventListener("click", () => {
+    if (minScoreInput) minScoreInput.value = "0";
+    if (minAreaInput) minAreaInput.value = "0";
+    if (highOnlyInput) highOnlyInput.checked = false;
+
+    activeTopTen = false;
+    applyFilters(true);
+  });
+}
+
 document.querySelectorAll(".cached-city-btn").forEach((button) => {
   button.addEventListener("click", () => {
     const place = button.dataset.place;
@@ -798,6 +1066,12 @@ map.on("click", (event) => {
 
   const { lat, lng } = event.latlng;
   scoreAmenityPin(lat, lng);
+});
+
+map.on("zoomend", () => {
+  if (parkingLayer) {
+    parkingLayer.setStyle(styleFeature);
+  }
 });
 
 function closeMobileSidebar() {
@@ -843,6 +1117,8 @@ if (mobileSidebarToggle) {
 }
 
 window.addEventListener("load", () => {
+  updateFilterLabels();
+
   setTimeout(() => {
     map.invalidateSize();
   }, 300);
