@@ -1435,3 +1435,39 @@ h2 {
   background: linear-gradient(90deg, #7dd3fc, #38bdf8);
   opacity: 0.85;
 }
+/* Final popup sizing override */
+.leaflet-popup-content-wrapper {
+  max-height: 82vh !important;
+  overflow: hidden !important;
+}
+
+.leaflet-popup-content {
+  max-height: 78vh !important;
+  overflow-y: auto !important;
+  margin: 0 !important;
+}
+
+.gf-popup {
+  width: 285px;
+}
+
+.gf-popup-header {
+  padding: 12px 15px !important;
+}
+
+.gf-popup-section {
+  padding: 10px 15px !important;
+}
+
+.score-bar-row {
+  margin: 5px 0 !important;
+}
+
+.score-bar-label {
+  font-size: 0.74rem !important;
+  margin-bottom: 2px !important;
+}
+
+.score-bar-track {
+  height: 6px !important;
+}
