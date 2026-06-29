@@ -84,6 +84,7 @@ const minAreaInput = document.getElementById("min-area");
 const highOnlyInput = document.getElementById("high-only");
 const showTopBtn = document.getElementById("show-top-btn");
 const resetFiltersBtn = document.getElementById("reset-filters-btn");
+const clearPinsBtn = document.getElementById("clear-pins-btn");
 const exportModeSelect = document.getElementById("export-mode");
 
 const amenityPinIcon = L.divIcon({
@@ -314,6 +315,42 @@ function buildSiteReason(props) {
   return `Strong candidate because of ${firstReasons}. Use this as a screening flag, not a final site-selection decision.`;
 }
 
+
+function googleMapsIcon() {
+  return `
+    <span class="gmaps-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" focusable="false">
+        <path fill="#34A853" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+        <path fill="#FBBC04" d="M12 2v20s7-7.75 7-13c0-3.87-3.13-7-7-7z" opacity="0.88"/>
+        <path fill="#4285F4" d="M12 5.25A3.75 3.75 0 1 0 12 12.75 3.75 3.75 0 0 0 12 5.25z"/>
+        <path fill="#EA4335" d="M12 2C8.13 2 5 5.13 5 9c0 2.15 1.17 4.7 2.57 6.98L12 9V2z" opacity="0.95"/>
+        <circle cx="12" cy="9" r="2.05" fill="#fff"/>
+      </svg>
+    </span>
+  `;
+}
+
+function googleMapsLinkHtml(lat, lon, label = "Open in Google Maps") {
+  const mapsUrl = googleMapsUrl(lat, lon);
+  if (!mapsUrl) return "";
+
+  return `<a class="map-action map-action-google" href="${mapsUrl}" target="_blank" rel="noopener">${googleMapsIcon()}<span>${label}</span></a>`;
+}
+
+function coordinateDisplay(lat, lon) {
+  if (lat === null || lat === undefined || lon === null || lon === undefined) return "";
+  return `${Number(lat).toFixed(6)}, ${Number(lon).toFixed(6)}`;
+}
+
+function clearAmenityPins() {
+  amenityPinMarkers.forEach((marker) => map.removeLayer(marker));
+  amenityPinMarkers = [];
+  pinResults = [];
+
+  if (clearPinsBtn) clearPinsBtn.disabled = true;
+  statusEl.textContent = "Cleared amenity pins.";
+}
+
 function googleMapsUrl(lat, lon) {
   if (lat === null || lat === undefined || lon === null || lon === undefined) {
     return null;
@@ -336,8 +373,6 @@ window.copyLotCoordinates = async function copyLotCoordinates(lat, lon) {
 
 function popupHtml(props) {
   const priority = props.priority_category || getScoreClass(props.redevelopment_score);
-  const mapsUrl = googleMapsUrl(props.centroid_lat, props.centroid_lon);
-
   return `
     <div class="gf-popup">
       <div class="gf-popup-header">
@@ -389,6 +424,11 @@ function popupHtml(props) {
           <span>Commercial</span>
           <strong>${formatDistance(props.distance_to_commercial_m)}</strong>
         </div>
+        ${
+          props.centroid_lat && props.centroid_lon
+            ? `<div class="gf-stat-row gf-coord-row"><span>Coordinates</span><strong>${coordinateDisplay(props.centroid_lat, props.centroid_lon)}</strong></div>`
+            : ""
+        }
       </div>
 
       <div class="gf-popup-section">
@@ -411,14 +451,10 @@ function popupHtml(props) {
       </div>
 
       <div class="gf-popup-actions">
-        ${
-          mapsUrl
-            ? `<a href="${mapsUrl}" target="_blank" rel="noopener">Open in Google Maps</a>`
-            : ""
-        }
+        ${googleMapsLinkHtml(props.centroid_lat, props.centroid_lon)}
         ${
           props.centroid_lat && props.centroid_lon
-            ? `<button type="button" onclick="copyLotCoordinates(${props.centroid_lat}, ${props.centroid_lon})">Copy coordinates</button>`
+            ? `<button class="map-action" type="button" onclick="copyLotCoordinates(${props.centroid_lat}, ${props.centroid_lon})"><span class="coord-icon" aria-hidden="true">⌖</span><span>Copy coordinates</span></button>`
             : ""
         }
       </div>
@@ -498,12 +534,12 @@ async function scoreAmenityPin(lat, lon) {
         </div>
 
         <div class="gf-popup-actions">
-          <a href="${mapsUrl}" target="_blank" rel="noopener">Open in Google Maps</a>
-          <button type="button" onclick="copyLotCoordinates(${data.lat}, ${data.lon})">Copy coordinates</button>
+          ${googleMapsLinkHtml(data.lat, data.lon)}
+          <button class="map-action" type="button" onclick="copyLotCoordinates(${coordinateDisplay(data.lat, data.lon)})"><span class="coord-icon" aria-hidden="true">⌖</span><span>Copy coordinates</span></button>
         </div>
 
         <div class="gf-popup-footer">
-          ${data.lat}, ${data.lon}
+          ${coordinateDisplay(data.lat, data.lon)}
         </div>
       </div>
     `;
@@ -511,6 +547,7 @@ async function scoreAmenityPin(lat, lon) {
     const marker = L.marker([lat, lon], { icon: amenityPinIcon }).addTo(map);
     marker.bindPopup(popupHtml).openPopup();
     amenityPinMarkers.push(marker);
+    if (clearPinsBtn) clearPinsBtn.disabled = false;
 
     if (amenityPinMarkers.length > 20) {
       const oldestMarker = amenityPinMarkers.shift();

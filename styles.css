@@ -1698,3 +1698,109 @@ h2 {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* =========================================================
+   MICRO UPDATE: status width, clear pins, Google Maps actions
+   ========================================================= */
+.status {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  white-space: nowrap !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  padding: 10px 12px !important;
+  border-left: 0 !important;
+  border-radius: 12px !important;
+  background: rgba(255, 255, 255, 0.055) !important;
+  border: 1px solid rgba(255, 255, 255, 0.085) !important;
+  scrollbar-width: thin;
+}
+
+.status::-webkit-scrollbar {
+  height: 4px;
+}
+
+.status::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(125, 211, 252, 0.42);
+}
+
+.clear-pins-btn {
+  width: 100%;
+  margin: 0 0 10px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(167, 139, 250, 0.24);
+  background: rgba(167, 139, 250, 0.1);
+  color: #e9d5ff;
+  font-size: 0.82rem;
+  font-weight: 850;
+  box-shadow: none;
+}
+
+.clear-pins-btn:not(:disabled):hover {
+  background: rgba(167, 139, 250, 0.17);
+  border-color: rgba(167, 139, 250, 0.42);
+  box-shadow: none;
+}
+
+.clear-pins-btn:disabled {
+  opacity: 0.45;
+}
+
+.gf-coord-row strong {
+  font-size: 0.78rem !important;
+  letter-spacing: -0.02em !important;
+}
+
+.gf-popup-actions {
+  grid-template-columns: 1fr 1fr !important;
+}
+
+.gf-popup-actions .map-action,
+.gf-popup-actions a.map-action,
+.gf-popup-actions button.map-action {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  min-height: 38px !important;
+  line-height: 1.05 !important;
+}
+
+.gmaps-icon {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  align-items: center;
+  justify-content: center;
+}
+
+.gmaps-icon svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+}
+
+.coord-icon {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.08);
+  color: #334155;
+  font-size: 0.85rem;
+  font-weight: 950;
+}
+
+@media (max-width: 560px) {
+  .gf-popup-actions {
+    grid-template-columns: 1fr !important;
+  }
+}
