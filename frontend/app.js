@@ -76,18 +76,40 @@ let progressInterval;
 let currentProgress = 0;
 let progressStartTime = 0;
 
-function startProgress() {
-progressStartTime = Date.now();
-currentProgress = 0;
+function isCachedPlace(place) {
+  const normalized = place.trim().toLowerCase();
 
-if (loadingOverlay) {
+  const cachedPlaces = [
+    "woodstock, ontario, canada",
+    "woodstock",
+    "woodstock ontario",
+    "woodstock ontario canada",
+    "ingersoll, ontario, canada",
+    "tillsonburg, ontario, canada",
+    "st. thomas, ontario, canada",
+    "stratford, ontario, canada"
+  ];
+
+  return cachedPlaces.includes(normalized);
+}
+
+function startProgress(place) {
+  progressStartTime = Date.now();
+  currentProgress = 0;
+
+  const cached = isCachedPlace(place);
+  const expectedDurationMs = cached ? 4000 : 75000;
+
+  if (loadingOverlay) {
     loadingOverlay.innerHTML = `
       <div class="loading-box">
         <div class="spinner"></div>
 
         <div class="loading-copy">
           <p class="loading-title">Analyzing parking lots</p>
-          <p class="loading-subtitle">Scoring redevelopment potential and nearby amenities...</p>
+          <p class="loading-subtitle" id="loading-subtitle">
+            Starting analysis...
+          </p>
         </div>
 
         <div class="progress-bar">
@@ -95,40 +117,54 @@ if (loadingOverlay) {
         </div>
 
         <div class="progress-row">
-          <span>Processing</span>
+          <span id="progress-stage">Preparing request</span>
           <span id="progress-text">0%</span>
         </div>
       </div>
     `;
+  }
 
-}
+  const progressFill = document.getElementById("progress-fill");
+  const progressText = document.getElementById("progress-text");
+  const progressStage = document.getElementById("progress-stage");
+  const loadingSubtitle = document.getElementById("loading-subtitle");
 
-const progressFill = document.getElementById("progress-fill");
-const progressText = document.getElementById("progress-text");
+  clearInterval(progressInterval);
 
-clearInterval(progressInterval);
+  progressInterval = setInterval(() => {
+    const elapsed = Date.now() - progressStartTime;
+    currentProgress = Math.min(96, Math.round((elapsed / expectedDurationMs) * 100));
 
-progressInterval = setInterval(() => {
-if (currentProgress < 65) {
-currentProgress += Math.floor(Math.random() * 8) + 4;
-} else if (currentProgress < 88) {
-currentProgress += Math.floor(Math.random() * 4) + 1;
-} else if (currentProgress < 95) {
-currentProgress += 1;
-}
+    if (progressFill) {
+      progressFill.style.width = `${currentProgress}%`;
+    }
 
+    if (progressText) {
+      progressText.textContent = `${currentProgress}%`;
+    }
 
-currentProgress = Math.min(currentProgress, 95);
-
-if (progressFill) {
-  progressFill.style.width = `${currentProgress}%`;
-}
-
-if (progressText) {
-  progressText.textContent = `${currentProgress}%`;
-}
-
-}, 300);
+    if (progressStage && loadingSubtitle) {
+      if (cached) {
+        progressStage.textContent = "Loading cached analysis";
+        loadingSubtitle.textContent = "Retrieving precomputed demo results...";
+      } else if (currentProgress < 10) {
+        progressStage.textContent = "Preparing request";
+        loadingSubtitle.textContent = "Connecting to the Greyfield Finder API...";
+      } else if (currentProgress < 30) {
+        progressStage.textContent = "Fetching OSM data";
+        loadingSubtitle.textContent = "Loading parking lots, amenities, transit, and commercial context...";
+      } else if (currentProgress < 55) {
+        progressStage.textContent = "Processing geometry";
+        loadingSubtitle.textContent = "Filtering surface lots and calculating site areas...";
+      } else if (currentProgress < 80) {
+        progressStage.textContent = "Scoring locations";
+        loadingSubtitle.textContent = "Measuring proximity to centres, transit, amenities, and services...";
+      } else {
+        progressStage.textContent = "Rendering map";
+        loadingSubtitle.textContent = "Preparing polygons, popups, rankings, and CSV fields...";
+      }
+    }
+  }, 500);
 }
 
 function finishProgress() {
@@ -465,7 +501,7 @@ async function analyzePlace() {
     return;
   }
 
-  startProgress();
+  startProgress(place);
 
   loadingOverlay.classList.remove("hidden");
   analyzeBtn.disabled = true;
