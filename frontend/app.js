@@ -226,10 +226,6 @@ function finishProgress() {
 function setToolMode(mode) {
   activeTool = mode;
 
-  if (clearPinsBtn) {
-    clearPinsBtn.addEventListener("click", clearAmenityPins);
-  }
-  
   if (parkingModeBtn && pinModeBtn) {
     parkingModeBtn.classList.toggle("active", mode === "parking");
     pinModeBtn.classList.toggle("active", mode === "pin");
@@ -347,12 +343,22 @@ function coordinateDisplay(lat, lon) {
 }
 
 function clearAmenityPins() {
-  amenityPinMarkers.forEach((marker) => map.removeLayer(marker));
+  if (amenityPinMarkers.length) {
+    amenityPinMarkers.forEach((marker) => {
+      if (map.hasLayer(marker)) {
+        map.removeLayer(marker);
+      }
+    });
+  }
+
   amenityPinMarkers = [];
   pinResults = [];
 
-  if (clearPinsBtn) clearPinsBtn.disabled = true;
-  statusEl.textContent = "Cleared amenity pins.";
+  if (clearPinsBtn) {
+    clearPinsBtn.disabled = false;
+  }
+
+  statusEl.textContent = "Amenity pins cleared.";
 }
 
 function googleMapsUrl(lat, lon) {
@@ -377,8 +383,11 @@ window.copyLotCoordinates = async function copyLotCoordinates(lat, lon) {
 
 function popupHtml(props) {
   const priority = props.priority_category || getScoreClass(props.redevelopment_score);
+  const hasCoords = props.centroid_lat !== null && props.centroid_lat !== undefined &&
+                    props.centroid_lon !== null && props.centroid_lon !== undefined;
+
   return `
-    <div class="gf-popup">
+    <div class="gf-popup gf-popup-parking">
       <div class="gf-popup-header">
         <div>
           <div class="gf-eyebrow">${props.name || "Surface parking lot"}</div>
@@ -391,51 +400,60 @@ function popupHtml(props) {
         ${buildSiteReason(props)}
       </div>
 
-      <div class="gf-popup-section">
+      <div class="gf-popup-section stats-section">
         <div class="gf-stat-row">
           <span>Amenity Access</span>
           <strong>${props.amenity_access_score ?? "N/A"}/100</strong>
         </div>
+
         <div class="gf-stat-row">
           <span>Area</span>
           <strong>${Math.round(props.area_m2).toLocaleString()} m²</strong>
         </div>
+
         <div class="gf-stat-row">
           <span>Centre</span>
           <strong>${formatDistance(props.distance_to_centre_m)}</strong>
         </div>
+
         <div class="gf-stat-row">
           <span>Transit</span>
           <strong>${formatDistance(props.distance_to_transit_m)}</strong>
         </div>
+
         <div class="gf-stat-row">
           <span>Grocery</span>
           <strong>${formatDistance(props.distance_to_grocery_m)}</strong>
         </div>
+
         <div class="gf-stat-row">
           <span>Health</span>
           <strong>${formatDistance(props.distance_to_health_m)}</strong>
         </div>
+
         <div class="gf-stat-row">
           <span>Civic</span>
           <strong>${formatDistance(props.distance_to_civic_m)}</strong>
         </div>
+
         <div class="gf-stat-row">
           <span>Park</span>
           <strong>${formatDistance(props.distance_to_park_m)}</strong>
         </div>
+
         <div class="gf-stat-row">
           <span>Commercial</span>
           <strong>${formatDistance(props.distance_to_commercial_m)}</strong>
         </div>
+
         ${
-          props.centroid_lat && props.centroid_lon
+          hasCoords
             ? `<div class="gf-stat-row gf-coord-row"><span>Coordinates</span><strong>${coordinateDisplay(props.centroid_lat, props.centroid_lon)}</strong></div>`
             : ""
         }
       </div>
 
-      <div class="gf-popup-section">
+      <div class="gf-popup-section redevelopment-section">
         <div class="gf-section-title">Redevelopment breakdown</div>
         ${scoreBar("Area", props.area_score, 30)}
         ${scoreBar("Centre", props.centre_score, 20)}
@@ -444,7 +462,7 @@ function popupHtml(props) {
         ${scoreBar("Commercial", props.commercial_score, 10)}
       </div>
 
-      <div class="gf-popup-section">
+      <div class="gf-popup-section amenity-section">
         <div class="gf-section-title">Amenity access breakdown</div>
         ${scoreBar("Grocery", props.grocery_score, 20)}
         ${scoreBar("Health", props.health_score, 20)}
@@ -455,9 +473,9 @@ function popupHtml(props) {
       </div>
 
       <div class="gf-popup-actions">
-        ${googleMapsLinkHtml(props.centroid_lat, props.centroid_lon)}
+        ${hasCoords ? googleMapsLinkHtml(props.centroid_lat, props.centroid_lon) : ""}
         ${
-          props.centroid_lat && props.centroid_lon
+          hasCoords
             ? `<button class="map-action" type="button" onclick="copyLotCoordinates(${props.centroid_lat}, ${props.centroid_lon})"><span class="coord-icon" aria-hidden="true">⌖</span><span>Copy coordinates</span></button>`
             : ""
         }
@@ -539,7 +557,7 @@ async function scoreAmenityPin(lat, lon) {
 
         <div class="gf-popup-actions">
           ${googleMapsLinkHtml(data.lat, data.lon)}
-          <button class="map-action" type="button" onclick="copyLotCoordinates(${coordinateDisplay(data.lat, data.lon)})"><span class="coord-icon" aria-hidden="true">⌖</span><span>Copy coordinates</span></button>
+          <button class="map-action" type="button" onclick="copyLotCoordinates(${data.lat}, ${data.lon})"><span class="coord-icon" aria-hidden="true">⌖</span><span>Copy coordinates</span></button>
         </div>
 
         <div class="gf-popup-footer">
@@ -1074,6 +1092,9 @@ if (resetFiltersBtn) {
     activeTopTen = false;
     applyFilters(true);
   });
+}
+if (clearPinsBtn) {
+  clearPinsBtn.addEventListener("click", clearAmenityPins);
 }
 
 document.querySelectorAll(".cached-city-btn").forEach((button) => {
