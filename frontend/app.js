@@ -248,22 +248,48 @@ async function scoreAmenityPin(lat, lon) {
 
     const d = data.distances;
 
-    const popupHtml = `
-      <div class="popup-content">
-        <h3>Amenity Access Pin</h3>
-        <p><strong>Score:</strong> ${data.amenity_access_score}/100</p>
-        <p><strong>Category:</strong> ${data.access_category}</p>
-        <hr>
-        <p><strong>Grocery:</strong> ${formatDistance(d.grocery_m)}</p>
-        <p><strong>Health:</strong> ${formatDistance(d.health_m)}</p>
-        <p><strong>Civic:</strong> ${formatDistance(d.civic_m)}</p>
-        <p><strong>Park:</strong> ${formatDistance(d.park_m)}</p>
-        <p><strong>Transit:</strong> ${formatDistance(d.transit_m)}</p>
-        <p><strong>Commercial:</strong> ${formatDistance(d.commercial_m)}</p>
-        <hr>
-        <p><strong>Lat/Lon:</strong> ${data.lat}, ${data.lon}</p>
+const popupHtml = `
+  <div class="gf-popup">
+    <div class="gf-popup-header">
+      <div>
+        <div class="gf-eyebrow">Amenity Access Pin</div>
+        <h3>${data.amenity_access_score}/100</h3>
       </div>
-    `;
+      <span class="gf-badge">${data.access_category}</span>
+    </div>
+
+    <div class="gf-popup-section">
+      <div class="gf-stat-row">
+        <span>Grocery</span>
+        <strong>${formatDistance(d.grocery_m)}</strong>
+      </div>
+      <div class="gf-stat-row">
+        <span>Health</span>
+        <strong>${formatDistance(d.health_m)}</strong>
+      </div>
+      <div class="gf-stat-row">
+        <span>Civic</span>
+        <strong>${formatDistance(d.civic_m)}</strong>
+      </div>
+      <div class="gf-stat-row">
+        <span>Park</span>
+        <strong>${formatDistance(d.park_m)}</strong>
+      </div>
+      <div class="gf-stat-row">
+        <span>Transit</span>
+        <strong>${formatDistance(d.transit_m)}</strong>
+      </div>
+      <div class="gf-stat-row">
+        <span>Commercial</span>
+        <strong>${formatDistance(d.commercial_m)}</strong>
+      </div>
+    </div>
+
+    <div class="gf-popup-footer">
+      ${data.lat}, ${data.lon}
+    </div>
+  </div>
+`;
 
     if (amenityPinMarker) {
       map.removeLayer(amenityPinMarker);
@@ -314,39 +340,76 @@ function formatDistance(value) {
 }
 
 function popupHtml(props) {
+  const priority = props.priority_category || getScoreClass(props.redevelopment_score);
+
   return `
-    <strong>${props.name || "Surface parking lot"}</strong><br />
-    <hr />
+    <div class="gf-popup">
+      <div class="gf-popup-header">
+        <div>
+          <div class="gf-eyebrow">${props.name || "Surface parking lot"}</div>
+          <h3>${props.redevelopment_score}/100</h3>
+        </div>
+        <span class="gf-badge">${priority}</span>
+      </div>
 
-    <strong>Priority:</strong> ${props.priority_category || getScoreClass(props.redevelopment_score)}<br />
-    <strong>Redevelopment Score:</strong> ${props.redevelopment_score}/100<br />
-    <strong>Amenity Access Score:</strong> ${props.amenity_access_score ?? "N/A"}/100<br />
-    <strong>Interpretation:</strong> ${props.priority_category || getScoreClass(props.redevelopment_score)} redevelopment potential<br /><br />
+      <div class="gf-popup-section">
+        <div class="gf-stat-row">
+          <span>Amenity Access</span>
+          <strong>${props.amenity_access_score ?? "N/A"}/100</strong>
+        </div>
+        <div class="gf-stat-row">
+          <span>Area</span>
+          <strong>${Math.round(props.area_m2).toLocaleString()} m²</strong>
+        </div>
+        <div class="gf-stat-row">
+          <span>Centre</span>
+          <strong>${formatDistance(props.distance_to_centre_m)}</strong>
+        </div>
+        <div class="gf-stat-row">
+          <span>Transit</span>
+          <strong>${formatDistance(props.distance_to_transit_m)}</strong>
+        </div>
+        <div class="gf-stat-row">
+          <span>Grocery</span>
+          <strong>${formatDistance(props.distance_to_grocery_m)}</strong>
+        </div>
+        <div class="gf-stat-row">
+          <span>Health</span>
+          <strong>${formatDistance(props.distance_to_health_m)}</strong>
+        </div>
+        <div class="gf-stat-row">
+          <span>Civic</span>
+          <strong>${formatDistance(props.distance_to_civic_m)}</strong>
+        </div>
+        <div class="gf-stat-row">
+          <span>Park</span>
+          <strong>${formatDistance(props.distance_to_park_m)}</strong>
+        </div>
+        <div class="gf-stat-row">
+          <span>Commercial</span>
+          <strong>${formatDistance(props.distance_to_commercial_m)}</strong>
+        </div>
+      </div>
 
-    <strong>Area:</strong> ${Math.round(props.area_m2).toLocaleString()} m²<br />
-    <strong>Distance to centre:</strong> ${formatDistance(props.distance_to_centre_m)}<br />
-    <strong>Distance to transit:</strong> ${formatDistance(props.distance_to_transit_m)}<br />
-    <strong>Nearest grocery:</strong> ${formatDistance(props.distance_to_grocery_m)}<br />
-    <strong>Nearest health service:</strong> ${formatDistance(props.distance_to_health_m)}<br />
-    <strong>Nearest civic service:</strong> ${formatDistance(props.distance_to_civic_m)}<br />
-    <strong>Nearest park:</strong> ${formatDistance(props.distance_to_park_m)}<br />
-    <strong>Commercial context:</strong> ${formatDistance(props.distance_to_commercial_m)}<br /><br />
+      <div class="gf-popup-section">
+        <div class="gf-section-title">Redevelopment breakdown</div>
+        ${scoreBar("Area", props.area_score, 30)}
+        ${scoreBar("Centre", props.centre_score, 20)}
+        ${scoreBar("Transit", props.transit_score, 20)}
+        ${scoreBar("Amenity", props.amenity_score, 20)}
+        ${scoreBar("Commercial", props.commercial_score, 10)}
+      </div>
 
-<strong>Redevelopment score breakdown</strong>
-${scoreBar("Area", props.area_score, 30)}
-${scoreBar("Centre", props.centre_score, 20)}
-${scoreBar("Transit", props.transit_score, 20)}
-${scoreBar("Amenity", props.amenity_score, 20)}
-${scoreBar("Commercial", props.commercial_score, 10)}
-
-<br />
-<strong>Amenity access breakdown</strong>
-${scoreBar("Grocery", props.grocery_score, 20)}
-${scoreBar("Health", props.health_score, 20)}
-${scoreBar("Civic", props.civic_score, 15)}
-${scoreBar("Park", props.park_score, 15)}
-${scoreBar("Transit", props.walk_transit_score, 20)}
-${scoreBar("Commercial", props.walk_commercial_score, 10)}
+      <div class="gf-popup-section">
+        <div class="gf-section-title">Amenity access breakdown</div>
+        ${scoreBar("Grocery", props.grocery_score, 20)}
+        ${scoreBar("Health", props.health_score, 20)}
+        ${scoreBar("Civic", props.civic_score, 15)}
+        ${scoreBar("Park", props.park_score, 15)}
+        ${scoreBar("Transit", props.walk_transit_score, 20)}
+        ${scoreBar("Commercial", props.walk_commercial_score, 10)}
+      </div>
+    </div>
   `;
 }
 
@@ -579,7 +642,7 @@ async function analyzePlace() {
         if (layer._path) {
           layer._path.classList.remove("parking-lot-hover");
         }
-        
+
     requestAnimationFrame(() => {
     function animateParkingLots() {
       let animationDelay = 0;
