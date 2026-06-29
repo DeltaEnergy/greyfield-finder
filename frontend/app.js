@@ -565,16 +565,25 @@ async function analyzePlace() {
     }
     }).addTo(map);
 
-        let animationDelay = 0;
+    requestAnimationFrame(() => {
+      let animationDelay = 0;
 
-    parkingLayer.eachLayer((layer) => {
-      if (layer._path) {
-        layer._path.style.animationDelay = `${animationDelay}ms`;
-        layer._path.classList.add("parking-lot-animate");
-        animationDelay += 8;
-      }
+      parkingLayer.eachLayer((layer) => {
+        const path = layer.getElement ? layer.getElement() : layer._path;
+
+        if (path) {
+          path.style.animationDelay = `${animationDelay}ms`;
+          path.classList.remove("parking-lot-animate");
+
+          // Force browser to restart the animation
+          void path.offsetWidth;
+
+          path.classList.add("parking-lot-animate");
+          animationDelay += 10;
+        }
+      });
     });
-
+    
     if (geojson.features.length > 0) {
       map.fitBounds(parkingLayer.getBounds(), { padding: [20, 20] });
     }

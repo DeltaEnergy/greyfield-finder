@@ -1038,3 +1038,22 @@ h2 {
     transform: scale(1);
   }
 }
+.parking-lot-animate {
+  animation: parkingLotFadeIn 0.7s ease-out both;
+}
+
+@keyframes parkingLotFadeIn {
+  0% {
+    opacity: 0;
+    stroke-width: 0;
+  }
+
+  60% {
+    opacity: 0.9;
+    stroke-width: 5;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
