@@ -226,6 +226,10 @@ function finishProgress() {
 function setToolMode(mode) {
   activeTool = mode;
 
+  if (clearPinsBtn) {
+    clearPinsBtn.addEventListener("click", clearAmenityPins);
+  }
+  
   if (parkingModeBtn && pinModeBtn) {
     parkingModeBtn.classList.toggle("active", mode === "parking");
     pinModeBtn.classList.toggle("active", mode === "pin");
