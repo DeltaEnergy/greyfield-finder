@@ -555,10 +555,14 @@ async function analyzePlace() {
         layer.bringToFront();
 
         layer.setStyle({
+          color: "#a855f7",
           weight: 5,
+          opacity: 1,
           fillOpacity: 0.9
         });
-
+        if (layer._path) {
+          layer._path.classList.add("parking-lot-hover");
+          }
         layer.openTooltip();
       });
 
@@ -572,7 +576,10 @@ async function analyzePlace() {
       });
     }
     }).addTo(map);
-
+        if (layer._path) {
+          layer._path.classList.remove("parking-lot-hover");
+        }
+        
     requestAnimationFrame(() => {
     function animateParkingLots() {
       let animationDelay = 0;

@@ -1057,3 +1057,6 @@ h2 {
     opacity: 1;
   }
 }
+.parking-lot-hover {
+  filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.9));
+}
