@@ -1638,3 +1638,207 @@ h2 {
     grid-template-columns: 1fr !important;
   }
 }
+/* =========================================================
+   TRUE FINAL POPUP + CLEAR PINS FIX
+   ========================================================= */
+
+/* Clear pins button spacing + polish */
+#clear-pins-btn,
+.clear-pins-btn {
+  width: 100% !important;
+  margin: 10px 0 12px !important;
+  padding: 11px 14px !important;
+  border-radius: 12px !important;
+  background: linear-gradient(135deg, #ffffff, #e0f2fe) !important;
+  color: #07111f !important;
+  border: 1px solid rgba(125, 211, 252, 0.35) !important;
+  font-weight: 950 !important;
+  box-shadow: 0 10px 24px rgba(125, 211, 252, 0.12) !important;
+}
+
+#clear-pins-btn:hover,
+.clear-pins-btn:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 14px 30px rgba(125, 211, 252, 0.18) !important;
+}
+
+/* Force Leaflet to stop making tiny receipt popups */
+.leaflet-popup {
+  width: auto !important;
+}
+
+.leaflet-popup-content-wrapper {
+  width: auto !important;
+  max-width: none !important;
+  border-radius: 18px !important;
+  overflow: hidden !important;
+}
+
+.leaflet-popup-content {
+  width: auto !important;
+  min-width: 680px !important;
+  max-width: 760px !important;
+  max-height: none !important;
+  overflow: visible !important;
+  margin: 0 !important;
+}
+
+/* Parking popup: compact wide dashboard */
+.gf-popup-parking {
+  width: 720px !important;
+  max-width: calc(100vw - 470px) !important;
+  min-width: 640px !important;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  grid-template-areas:
+    "header header"
+    "insight insight"
+    "stats stats"
+    "redevelopment amenity"
+    "actions actions" !important;
+  background: #ffffff !important;
+  color: #0f172a !important;
+  overflow: hidden !important;
+}
+
+/* Header */
+.gf-popup-parking .gf-popup-header {
+  grid-area: header !important;
+  padding: 12px 16px !important;
+}
+
+.gf-popup-parking .gf-popup h3,
+.gf-popup-parking h3 {
+  font-size: 1.55rem !important;
+}
+
+/* Insight line */
+.gf-popup-parking .gf-insight {
+  grid-area: insight !important;
+  padding: 10px 16px !important;
+  font-size: 0.78rem !important;
+  line-height: 1.35 !important;
+}
+
+/* Stats: two columns so it does not become tall */
+.gf-popup-parking .stats-section,
+.gf-popup-parking > .gf-popup-section:nth-of-type(2) {
+  grid-area: stats !important;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  column-gap: 22px !important;
+  padding: 10px 16px !important;
+  border-bottom: 1px solid #e5e7eb !important;
+}
+
+/* Breakdown sections side-by-side */
+.gf-popup-parking .redevelopment-section,
+.gf-popup-parking > .gf-popup-section:nth-of-type(3) {
+  grid-area: redevelopment !important;
+  padding: 10px 16px !important;
+  border-right: 1px solid #e5e7eb !important;
+}
+
+.gf-popup-parking .amenity-section,
+.gf-popup-parking > .gf-popup-section:nth-of-type(4) {
+  grid-area: amenity !important;
+  padding: 10px 16px !important;
+}
+
+/* Compact row sizing */
+.gf-stat-row {
+  padding: 3px 0 !important;
+  font-size: 0.79rem !important;
+}
+
+.gf-section-title {
+  margin-bottom: 6px !important;
+  font-size: 0.7rem !important;
+}
+
+.score-bar-row {
+  margin: 4px 0 !important;
+}
+
+.score-bar-label {
+  font-size: 0.68rem !important;
+  margin-bottom: 2px !important;
+}
+
+.score-bar-track {
+  height: 5px !important;
+}
+
+/* Actions */
+.gf-popup-parking .gf-popup-actions {
+  grid-area: actions !important;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 10px !important;
+  padding: 10px 16px !important;
+  background: #f8fafc !important;
+  border-top: 1px solid #e5e7eb !important;
+}
+
+.gf-popup-actions a,
+.gf-popup-actions button {
+  min-height: 32px !important;
+  padding: 7px 10px !important;
+  font-size: 0.7rem !important;
+}
+
+/* Amenity pin popup stays compact */
+.gf-popup-pin {
+  width: 380px !important;
+  min-width: 380px !important;
+  max-width: 380px !important;
+  display: block !important;
+}
+
+.gf-popup-pin .gf-popup-section,
+.gf-popup-pin .gf-insight,
+.gf-popup-pin .gf-popup-actions,
+.gf-popup-pin .gf-popup-footer {
+  display: block !important;
+  grid-area: auto !important;
+  grid-column: auto !important;
+  border-right: none !important;
+}
+
+.gf-popup-pin .gf-popup-actions {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+}
+
+/* Mobile: go back to narrow normal popup */
+@media (max-width: 900px) {
+  .leaflet-popup-content {
+    min-width: 280px !important;
+    max-width: 330px !important;
+    max-height: 78vh !important;
+    overflow-y: auto !important;
+  }
+
+  .gf-popup-parking,
+  .gf-popup-pin {
+    width: min(330px, calc(100vw - 36px)) !important;
+    min-width: 0 !important;
+    max-width: min(330px, calc(100vw - 36px)) !important;
+    display: block !important;
+  }
+
+  .gf-popup-parking .stats-section,
+  .gf-popup-parking > .gf-popup-section:nth-of-type(2),
+  .gf-popup-parking .redevelopment-section,
+  .gf-popup-parking > .gf-popup-section:nth-of-type(3),
+  .gf-popup-parking .amenity-section,
+  .gf-popup-parking > .gf-popup-section:nth-of-type(4) {
+    display: block !important;
+    border-right: none !important;
+  }
+
+  .gf-popup-actions,
+  .gf-popup-pin .gf-popup-actions {
+    grid-template-columns: 1fr !important;
+  }
+}
