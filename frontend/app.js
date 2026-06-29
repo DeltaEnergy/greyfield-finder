@@ -535,27 +535,35 @@ async function analyzePlace() {
     featureLayers = [];
 
     parkingLayer = L.geoJSON(geojson, {
+      interactive: true,
       style: styleFeature,
       onEachFeature: (feature, layer) => {
       layer.bindPopup(popupHtml(feature.properties));
       featureLayers.push(layer);
 
+            const score = feature.properties.redevelopment_score || 0;
+      const tooltipText = `${feature.properties.priority_category || getScoreClass(score)} — ${score}/100`;
+
+      layer.bindTooltip(tooltipText, {
+        sticky: true,
+        direction: "top",
+        opacity: 0.95,
+        className: "lot-tooltip"
+      });
+
       layer.on("mouseover", () => {
-        const score = feature.properties.redevelopment_score || 0;
+        layer.bringToFront();
 
         layer.setStyle({
-          weight: 4,
-          fillOpacity: 0.85
+          weight: 5,
+          fillOpacity: 0.9
         });
 
-        layer.bindTooltip(
-          `${feature.properties.priority_category || getScoreClass(score)} — ${score}/100`,
-          {
-            sticky: true,
-            direction: "top",
-            opacity: 0.95
-          }
-        ).openTooltip();
+        layer.openTooltip();
+      });
+
+      layer.on("mousemove", () => {
+        layer.openTooltip();
       });
 
       layer.on("mouseout", () => {
