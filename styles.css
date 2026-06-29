@@ -1772,3 +1772,119 @@ h2 {
     grid-template-columns: 1fr !important;
   }
 }
+/* FINAL popup layout fix — clean wide parking card */
+.leaflet-popup-content {
+  min-width: 660px !important;
+  max-width: 760px !important;
+  max-height: 78vh !important;
+  overflow-y: auto !important;
+}
+
+.gf-popup-parking {
+  width: min(740px, calc(100vw - 44px)) !important;
+  display: grid !important;
+  grid-template-columns: 1.05fr 1fr !important;
+  grid-template-areas:
+    "header header"
+    "insight insight"
+    "stats redevelopment"
+    "amenity amenity"
+    "actions actions" !important;
+}
+
+.gf-popup-parking .gf-popup-header {
+  grid-area: header !important;
+}
+
+.gf-popup-parking .gf-insight {
+  grid-area: insight !important;
+}
+
+.gf-popup-parking .stats-section {
+  grid-area: stats !important;
+  display: block !important;
+  border-right: 1px solid #e5e7eb !important;
+}
+
+.gf-popup-parking .redevelopment-section {
+  grid-area: redevelopment !important;
+  display: block !important;
+  border-right: none !important;
+}
+
+.gf-popup-parking .amenity-section {
+  grid-area: amenity !important;
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  column-gap: 22px !important;
+  border-top: 1px solid #e5e7eb !important;
+}
+
+.gf-popup-parking .amenity-section .gf-section-title {
+  grid-column: 1 / -1 !important;
+}
+
+.gf-popup-parking .gf-popup-actions {
+  grid-area: actions !important;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 10px !important;
+  padding: 12px 16px !important;
+  background: #ffffff !important;
+  border-top: 1px solid #e5e7eb !important;
+}
+
+/* Compact amenity pin popup — do not use parking grid */
+.gf-popup-pin {
+  width: min(410px, calc(100vw - 44px)) !important;
+  display: block !important;
+}
+
+.gf-popup-pin .gf-popup-section,
+.gf-popup-pin .gf-insight,
+.gf-popup-pin .gf-popup-actions,
+.gf-popup-pin .gf-popup-footer {
+  display: block !important;
+  grid-area: auto !important;
+  grid-column: auto !important;
+  border-right: none !important;
+}
+
+.gf-popup-pin .gf-popup-actions {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 10px !important;
+}
+
+/* Prevent old nth-of-type rules from causing blank grid cells */
+.gf-popup > .gf-popup-section:nth-of-type(2),
+.gf-popup > .gf-popup-section:nth-of-type(3),
+.gf-popup > .gf-popup-section:nth-of-type(4) {
+  grid-column: auto !important;
+}
+
+/* Mobile fallback */
+@media (max-width: 780px) {
+  .leaflet-popup-content {
+    min-width: 280px !important;
+    max-width: 330px !important;
+  }
+
+  .gf-popup-parking,
+  .gf-popup-pin {
+    width: min(330px, calc(100vw - 36px)) !important;
+    display: block !important;
+  }
+
+  .gf-popup-parking .stats-section,
+  .gf-popup-parking .redevelopment-section,
+  .gf-popup-parking .amenity-section {
+    display: block !important;
+    border-right: none !important;
+  }
+
+  .gf-popup-actions,
+  .gf-popup-pin .gf-popup-actions {
+    grid-template-columns: 1fr !important;
+  }
+}
