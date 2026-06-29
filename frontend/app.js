@@ -566,6 +566,7 @@ async function analyzePlace() {
     }).addTo(map);
 
     requestAnimationFrame(() => {
+    function animateParkingLots() {
       let animationDelay = 0;
 
       parkingLayer.eachLayer((layer) => {
@@ -573,15 +574,15 @@ async function analyzePlace() {
 
         if (path) {
           path.style.animationDelay = `${animationDelay}ms`;
+
           path.classList.remove("parking-lot-animate");
-
-          // Force browser to restart the animation
           void path.offsetWidth;
-
           path.classList.add("parking-lot-animate");
-          animationDelay += 10;
+
+          animationDelay += 12;
         }
       });
+    }
     });
     
     if (geojson.features.length > 0) {
@@ -594,6 +595,10 @@ async function analyzePlace() {
       if (parkingLayer && geojson.features.length > 0) {
         map.fitBounds(parkingLayer.getBounds(), { padding: [20, 20] });
       }
+
+      setTimeout(() => {
+        animateParkingLots();
+      }, 600);
     }, 300);
 
     renderResultsList(geojson.features);

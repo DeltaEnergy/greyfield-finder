@@ -1070,3 +1070,25 @@ h2 {
     transform: scale(1);
   }
 }
+.parking-lot-animate {
+  animation: parkingLotPop 1s ease-out both !important;
+}
+
+@keyframes parkingLotPop {
+  0% {
+    opacity: 0 !important;
+    stroke-width: 0 !important;
+    filter: brightness(2);
+  }
+
+  45% {
+    opacity: 1 !important;
+    stroke-width: 8 !important;
+    filter: brightness(1.8);
+  }
+
+  100% {
+    opacity: 1 !important;
+    filter: brightness(1);
+  }
+}
